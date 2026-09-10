@@ -1,6 +1,9 @@
-# Despliegue gratis 24/7 (Vercel + Supabase)
+# Despliegue gratis 24/7 (fuera de Azure)
 
-Stack gratuito recomendado para este helpdesk:
+**Decisión actual:** hosting fuera de Azure → **Vercel Hobby + Supabase Free (+ Resend Free opcional)**.  
+Azure se puede plantear más adelante si hace falta (App Service / Container Apps).
+
+Stack:
 
 | Servicio | Plan free | Para qué |
 |---|---|---|
