@@ -154,6 +154,7 @@ curl -s http://127.0.0.1:3456/api/webhooks/resend \
 | Comando | Descripción |
 |---|---|
 | `npm run dev` | Dev server en puerto **3456** |
+| `npm run tunnel` | URL pública temporal (`trycloudflare.com`) |
 | `npm run build` | Build de producción |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
