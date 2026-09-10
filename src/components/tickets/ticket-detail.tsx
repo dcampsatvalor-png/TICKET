@@ -147,7 +147,11 @@ export function TicketDetail({
                 disabled={isPending}
               >
                 <SelectTrigger id="status" className="w-full bg-white">
-                  <SelectValue />
+                  <SelectValue>
+                    {(value: TicketStatus | null) =>
+                      value ? STATUS_LABELS[value] : "Seleccionar"
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(STATUS_LABELS) as TicketStatus[]).map((s) => (
@@ -166,7 +170,15 @@ export function TicketDetail({
                 disabled={isPending}
               >
                 <SelectTrigger id="assignee" className="w-full bg-white">
-                  <SelectValue />
+                  <SelectValue>
+                    {(value: string | null) => {
+                      if (!value || value === "none") return "Sin asignar";
+                      return (
+                        agents.find((a) => a.id === value)?.full_name ??
+                        "Agente"
+                      );
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sin asignar</SelectItem>

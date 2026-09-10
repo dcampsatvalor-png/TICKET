@@ -43,9 +43,10 @@ src/
     ui/                    # shadcn
   lib/
     demo/store.ts          # Store en memoria
-    supabase/              # browser + server + middleware helpers
+    supabase/              # browser + server + session helpers
     tickets/service.ts     # Acceso a datos (demo | Supabase)
     email/resend.ts        # Envío de respuestas
+  proxy.ts                 # Auth session / redirects (Next.js proxy)
   types/database.ts
 supabase/migrations/
   001_helpdesk_schema.sql  # Schema + RLS + triggers

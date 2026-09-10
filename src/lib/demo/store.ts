@@ -36,7 +36,6 @@ type DemoStore = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __helpdeskDemoStore: DemoStore | undefined;
 }
 
