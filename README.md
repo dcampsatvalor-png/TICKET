@@ -13,7 +13,12 @@ Panel interno de helpdesk para un equipo IT pequeño (2 técnicos). Los usuarios
 
 El **port forwarding de Cursor** (`127.0.0.1`) solo sirve para previsualizar en un PC. **No** da acceso compartido al equipo.
 
-Opciones reales:
+### Producción gratis 24/7 (recomendado)
+
+**Vercel (Hobby) + Supabase (Free) + Resend (Free).**  
+Guía paso a paso: **[DEPLOY.md](./DEPLOY.md)**.
+
+Resumen: publica el repo en GitHub → crea proyecto Supabase y ejecuta el SQL → importa el repo en Vercel con las variables de entorno → los 2 agentes entran por `/login`.
 
 ### A) URL pública temporal (mientras corre el agente / un PC con tunnel)
 
@@ -25,7 +30,7 @@ npm run tunnel
 
 Eso publica un enlace `https://….trycloudflare.com` que cualquiera puede abrir en el navegador (misma app, mismos datos en memoria del proceso).
 
-### B) Cada uno en local (recomendado para desarrollo)
+### B) Cada uno en local (desarrollo)
 
 ```bash
 git clone <url-del-repo>
@@ -35,16 +40,6 @@ npm run dev
 ```
 
 Abre [http://127.0.0.1:3456](http://127.0.0.1:3456). Cada instalación tiene su propio modo demo en memoria.
-
-### C) Producción compartida (Vercel + Supabase)
-
-1. Ejecuta `supabase/migrations/001_helpdesk_schema.sql` en tu proyecto Supabase.
-2. Crea los 2 usuarios agentes en Auth.
-3. Despliega en [Vercel](https://vercel.com) (Import Git → este repo).
-4. Configura las variables de `.env.local.example` en Vercel.
-5. Configura el webhook de Resend hacia `https://<tu-dominio>/api/webhooks/resend`.
-
-Esa es la forma estable para que **todos** uséis el mismo panel 24/7.
 
 ## Modo demo (sin secretos)
 
