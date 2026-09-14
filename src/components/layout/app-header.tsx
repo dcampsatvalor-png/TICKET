@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Headset, LogOut } from "lucide-react";
-import { logoutAction } from "@/app/actions/auth";
+import { Headset } from "lucide-react";
+import { LogoutButton } from "@/components/auth/logout-button";
 import { isDemoMode } from "@/lib/env";
 import type { Profile } from "@/types/database";
-import { Button } from "@/components/ui/button";
 
 export function AppHeader({ profile }: { profile: Profile | null }) {
   const demo = isDemoMode();
@@ -17,9 +16,9 @@ export function AppHeader({ profile }: { profile: Profile | null }) {
           </span>
           <div className="leading-tight">
             <p className="font-heading text-sm font-semibold tracking-tight text-slate-900">
-              Mesa de Ayuda
+              SOPORTE IT
             </p>
-            <p className="text-[11px] text-slate-500">Soporte IT interno</p>
+            <p className="text-[11px] text-slate-500">TASACIONES HIPOTECARIAS</p>
           </div>
         </Link>
 
@@ -35,12 +34,7 @@ export function AppHeader({ profile }: { profile: Profile | null }) {
               <p className="text-[11px] text-slate-500">{profile.email}</p>
             </div>
           )}
-          <form action={logoutAction}>
-            <Button type="submit" variant="ghost" size="sm" className="gap-1.5 text-slate-600">
-              <LogOut className="size-3.5" />
-              <span className="hidden sm:inline">Salir</span>
-            </Button>
-          </form>
+          <LogoutButton />
         </div>
       </div>
     </header>

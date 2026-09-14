@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { loginAction } from "@/app/actions/auth";
+import { LoginForm } from "@/components/auth/login-form";
 import { isDemoMode } from "@/lib/env";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Headset } from "lucide-react";
 
 export default async function LoginPage({
@@ -35,60 +32,17 @@ export default async function LoginPage({
             <Headset className="size-6" />
           </div>
           <h1 className="font-heading text-3xl font-semibold tracking-tight text-slate-900">
-            Mesa de Ayuda
+            SOPORTE IT
           </h1>
-          <p className="mt-2 text-slate-600">
-            Acceso para agentes de soporte IT
-          </p>
+          <p className="mt-2 text-slate-600">TASACIONES HIPOTECARIAS</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-xl shadow-slate-300/30 backdrop-blur">
-          {demo ? (
-            <div className="space-y-4">
-              <p className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-900">
-                Estás en <strong>modo demo</strong>: no hace falta Supabase.
-                Entra directamente al panel con datos de ejemplo.
-              </p>
-              <form action={loginAction}>
-                <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700">
-                  Entrar al panel demo
-                </Button>
-              </form>
-            </div>
-          ) : (
-            <form action={loginAction} className="space-y-4">
-              <input type="hidden" name="next" value={params.next ?? "/tickets"} />
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="agente@empresa.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                />
-              </div>
-              {params.error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {params.error}
-                </p>
-              )}
-              <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700">
-                Iniciar sesión
-              </Button>
-            </form>
-          )}
+          <LoginForm
+            demo={demo}
+            next={params.next ?? "/tickets"}
+            error={params.error}
+          />
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">

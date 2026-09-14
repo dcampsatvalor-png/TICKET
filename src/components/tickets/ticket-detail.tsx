@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LoadingOverlay, Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Lock, Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +34,7 @@ export function TicketDetail({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [pendingLabel, setPendingLabel] = useState("Procesando…");
   const [mode, setMode] = useState<"public" | "internal">("public");
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +42,7 @@ export function TicketDetail({
 
   function onStatusChange(value: string | null) {
     if (!value) return;
+    setPendingLabel("Actualizando estado…");
     startTransition(async () => {
       await updateStatusAction(ticket.id, value as TicketStatus);
       router.refresh();
@@ -48,6 +51,7 @@ export function TicketDetail({
 
   function onAssigneeChange(value: string | null) {
     if (!value) return;
+    setPendingLabel("Asignando agente…");
     startTransition(async () => {
       await updateAssigneeAction(ticket.id, value === "none" ? null : value);
       router.refresh();
@@ -58,6 +62,9 @@ export function TicketDetail({
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setPendingLabel(
+      mode === "internal" ? "Guardando nota…" : "Enviando respuesta…"
+    );
     startTransition(async () => {
       const result = await replyAction({
         ticketId: ticket.id,
@@ -104,7 +111,8 @@ export function TicketDetail({
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="relative space-y-8">
+      {isPending && <LoadingOverlay label={pendingLabel} />}
       <div className="space-y-4">
         <Link
           href="/tickets"
@@ -304,7 +312,15 @@ export function TicketDetail({
                 : "Solo se guarda en el panel; el cliente no la verá."}
             </p>
             <Button type="submit" disabled={isPending || !content.trim()}>
-              {isPending ? "Enviando…" : mode === "public" ? "Enviar respuesta" : "Guardar nota"}
+              {isPending ? (
+                <Spinner
+                  label={mode === "public" ? "Enviando…" : "Guardando…"}
+                />
+              ) : mode === "public" ? (
+                "Enviar respuesta"
+              ) : (
+                "Guardar nota"
+              )}
             </Button>
           </div>
         </form>

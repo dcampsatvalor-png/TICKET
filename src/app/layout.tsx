@@ -15,7 +15,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mesa de Ayuda · Soporte IT",
+  title: "SOPORTE IT · Tasaciones Hipotecarias",
   description: "Panel interno de gestión de tickets e incidencias por correo",
 };
 
