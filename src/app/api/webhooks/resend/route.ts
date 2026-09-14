@@ -80,11 +80,12 @@ function verifyWebhook(req: Request, body: string): boolean {
   return false;
 }
 
-async function resolveInboundContent(data: NonNullable<ResendInboundPayload["data"]> & {
+async function resolveInboundContent(data: {
   from?: string;
   subject?: string;
-  text?: string;
-  html?: string;
+  text?: string | null;
+  html?: string | null;
+  email_id?: string;
 }): Promise<{
   fromRaw: string;
   subject: string;
@@ -92,8 +93,8 @@ async function resolveInboundContent(data: NonNullable<ResendInboundPayload["dat
 }> {
   let fromRaw = data.from ?? "";
   let subject = data.subject ?? "(sin asunto)";
-  let text = data.text ?? null;
-  let html = data.html ?? null;
+  let text: string | null = data.text ?? null;
+  let html: string | null = data.html ?? null;
 
   // Resend email.received webhooks only include metadata; fetch body via API.
   if (data.email_id && process.env.RESEND_API_KEY) {
