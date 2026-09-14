@@ -171,6 +171,25 @@ export function getDemoTicket(id: string): TicketWithRelations | null {
   };
 }
 
+export function updateDemoTicketEmailThread(
+  id: string,
+  messageId: string,
+  previousReferences?: string | null
+): Ticket | null {
+  const store = getStore();
+  const ticket = store.tickets.find((t) => t.id === id);
+  if (!ticket) return null;
+  const parts = (previousReferences ?? ticket.email_references ?? "")
+    .split(/\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!parts.includes(messageId)) parts.push(messageId);
+  ticket.last_email_message_id = messageId;
+  ticket.email_references = parts.join(" ");
+  ticket.updated_at = new Date().toISOString();
+  return ticket;
+}
+
 export function updateDemoTicketStatus(id: string, status: TicketStatus): Ticket | null {
   const store = getStore();
   const ticket = store.tickets.find((t) => t.id === id);
@@ -218,6 +237,7 @@ export function createDemoTicket(input: {
   description: string;
   senderEmail: string;
   senderName: string | null;
+  messageId?: string | null;
 }): Ticket {
   const store = getStore();
   const now = new Date().toISOString();
@@ -232,6 +252,8 @@ export function createDemoTicket(input: {
     assigned_to: null,
     created_at: now,
     updated_at: now,
+    last_email_message_id: input.messageId ?? null,
+    email_references: input.messageId ?? null,
   };
   store.tickets.unshift(ticket);
   return ticket;

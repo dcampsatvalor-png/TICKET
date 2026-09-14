@@ -9,6 +9,7 @@ import {
   listDemoTickets,
   listOpenDemoTicketsBySender,
   updateDemoTicketAssignee,
+  updateDemoTicketEmailThread,
   updateDemoTicketStatus,
 } from "@/lib/demo/store";
 import {
@@ -183,9 +184,22 @@ function subjectsMatchForThread(emailSubject: string, ticketSubject: string): bo
   return Boolean(a && b && a === b);
 }
 
+function appendMessageIdChain(
+  existing: string | null | undefined,
+  messageId: string
+): string {
+  const parts = (existing ?? "")
+    .split(/\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!parts.includes(messageId)) parts.push(messageId);
+  return parts.join(" ");
+}
+
 async function appendInboundComment(
   ticket: Ticket,
-  body: string
+  body: string,
+  messageId?: string | null
 ): Promise<{ ticket: Ticket; created: false }> {
   if (isDemoMode()) {
     addDemoComment({
@@ -194,6 +208,14 @@ async function appendInboundComment(
       content: body,
       isInternal: false,
     });
+    if (messageId) {
+      ticket.last_email_message_id = messageId;
+      ticket.email_references = appendMessageIdChain(
+        ticket.email_references,
+        messageId
+      );
+      ticket.updated_at = new Date().toISOString();
+    }
     return { ticket, created: false };
   }
 
@@ -205,8 +227,23 @@ async function appendInboundComment(
     content: body,
     is_internal: false,
   });
-  await supabase.from("tickets").update({ updated_at: now }).eq("id", ticket.id);
-  return { ticket, created: false };
+
+  const patch: Record<string, string> = { updated_at: now };
+  if (messageId) {
+    patch.last_email_message_id = messageId;
+    patch.email_references = appendMessageIdChain(
+      ticket.email_references,
+      messageId
+    );
+  }
+  await supabase.from("tickets").update(patch).eq("id", ticket.id);
+  return {
+    ticket: {
+      ...ticket,
+      ...patch,
+    },
+    created: false,
+  };
 }
 
 /**
@@ -221,26 +258,29 @@ export async function ingestInboundEmail(input: {
   body: string;
   senderEmail: string;
   senderName: string | null;
+  messageId?: string | null;
 }): Promise<{ ticket: Ticket; created: boolean }> {
   const ticketNumber = extractTicketNumber(input.subject);
+  const messageId = input.messageId?.trim() || null;
 
   if (isDemoMode()) {
     if (ticketNumber != null) {
       const existing = findDemoTicketByNumber(ticketNumber);
-      if (existing) return appendInboundComment(existing, input.body);
+      if (existing) return appendInboundComment(existing, input.body, messageId);
     }
 
     const openForSender = listOpenDemoTicketsBySender(input.senderEmail);
     const sameSubject = openForSender.find((t) =>
       subjectsMatchForThread(input.subject, t.subject)
     );
-    if (sameSubject) return appendInboundComment(sameSubject, input.body);
+    if (sameSubject) return appendInboundComment(sameSubject, input.body, messageId);
 
     const ticket = createDemoTicket({
       subject: cleanTicketSubject(input.subject),
       description: input.body,
       senderEmail: input.senderEmail,
       senderName: input.senderName,
+      messageId,
     });
     return { ticket, created: true };
   }
@@ -254,7 +294,7 @@ export async function ingestInboundEmail(input: {
       .eq("ticket_number", ticketNumber)
       .maybeSingle();
     if (existing) {
-      return appendInboundComment(existing as Ticket, input.body);
+      return appendInboundComment(existing as Ticket, input.body, messageId);
     }
   }
 
@@ -270,23 +310,50 @@ export async function ingestInboundEmail(input: {
     subjectsMatchForThread(input.subject, t.subject)
   );
   if (sameSubject) {
-    return appendInboundComment(sameSubject, input.body);
+    return appendInboundComment(sameSubject, input.body, messageId);
   }
 
   const subject = cleanTicketSubject(input.subject);
 
+  const insertRow: Record<string, unknown> = {
+    subject,
+    description: input.body,
+    sender_email: input.senderEmail,
+    sender_name: input.senderName,
+    status: "open",
+  };
+  if (messageId) {
+    insertRow.last_email_message_id = messageId;
+    insertRow.email_references = messageId;
+  }
+
   const { data: created, error } = await supabase
     .from("tickets")
-    .insert({
-      subject,
-      description: input.body,
-      sender_email: input.senderEmail,
-      sender_name: input.senderName,
-      status: "open",
-    })
+    .insert(insertRow)
     .select("*")
     .single();
 
   if (error) throw error;
   return { ticket: created as Ticket, created: true };
+}
+
+export async function updateTicketEmailThread(
+  ticketId: string,
+  messageId: string,
+  previousReferences?: string | null
+): Promise<void> {
+  if (isDemoMode()) {
+    updateDemoTicketEmailThread(ticketId, messageId, previousReferences);
+    return;
+  }
+
+  const supabase = createServiceClient();
+  await supabase
+    .from("tickets")
+    .update({
+      last_email_message_id: messageId,
+      email_references: appendMessageIdChain(previousReferences, messageId),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", ticketId);
 }

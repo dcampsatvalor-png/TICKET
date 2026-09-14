@@ -18,6 +18,8 @@ export type Ticket = {
   assigned_to: string | null;
   created_at: string;
   updated_at: string;
+  last_email_message_id?: string | null;
+  email_references?: string | null;
 };
 
 export type TicketComment = {

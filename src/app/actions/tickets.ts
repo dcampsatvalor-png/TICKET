@@ -8,6 +8,7 @@ import {
   getTicket,
   setTicketAssignee,
   setTicketStatus,
+  updateTicketEmailThread,
 } from "@/lib/tickets/service";
 import type { TicketStatus } from "@/types/database";
 
@@ -62,12 +63,21 @@ export async function replyAction(input: {
       subject: ticket.subject,
       body: content,
       agentName: profile.full_name,
+      inReplyTo: ticket.last_email_message_id,
+      references: ticket.email_references,
     });
     if (!emailResult.ok) {
       return {
         ok: false as const,
         error: emailResult.error ?? "No se pudo enviar el correo.",
       };
+    }
+    if (emailResult.messageId) {
+      await updateTicketEmailThread(
+        ticket.id,
+        emailResult.messageId,
+        ticket.email_references
+      );
     }
   }
 

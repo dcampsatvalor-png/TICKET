@@ -13,12 +13,14 @@ type ResendInboundPayload = {
     text?: string | null;
     html?: string | null;
     email_id?: string;
+    message_id?: string;
   };
   // Alternate / simplified shapes for local testing
   from?: string;
   subject?: string;
   text?: string;
   html?: string;
+  message_id?: string;
 };
 
 function parseAddress(raw: string): { email: string; name: string | null } {
@@ -86,15 +88,18 @@ async function resolveInboundContent(data: {
   text?: string | null;
   html?: string | null;
   email_id?: string;
+  message_id?: string;
 }): Promise<{
   fromRaw: string;
   subject: string;
   body: string;
+  messageId: string | null;
 }> {
   let fromRaw = data.from ?? "";
   let subject = data.subject ?? "(sin asunto)";
   let text: string | null = data.text ?? null;
   let html: string | null = data.html ?? null;
+  let messageId: string | null = data.message_id ?? null;
 
   // Resend email.received webhooks only include metadata; fetch body via API.
   if (data.email_id && process.env.RESEND_API_KEY) {
@@ -108,6 +113,12 @@ async function resolveInboundContent(data: {
       subject = email.subject || subject;
       text = email.text ?? text;
       html = email.html ?? html;
+      const headers = email.headers as Record<string, string> | undefined;
+      messageId =
+        (email as { message_id?: string }).message_id ||
+        headers?.["message-id"] ||
+        headers?.["Message-ID"] ||
+        messageId;
     }
   }
 
@@ -116,7 +127,7 @@ async function resolveInboundContent(data: {
     (html ? stripHtml(html) : "") ||
     "(mensaje vacío)";
 
-  return { fromRaw, subject, body };
+  return { fromRaw, subject, body, messageId };
 }
 
 export async function POST(req: Request) {
@@ -143,8 +154,9 @@ export async function POST(req: Request) {
   let fromRaw: string;
   let subject: string;
   let body: string;
+  let messageId: string | null;
   try {
-    ({ fromRaw, subject, body } = await resolveInboundContent(data));
+    ({ fromRaw, subject, body, messageId } = await resolveInboundContent(data));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al leer el correo";
     return NextResponse.json({ error: message }, { status: 502 });
@@ -154,6 +166,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Falta el remitente" }, { status: 400 });
   }
 
+  // Prefer message_id from webhook payload when present
+  if (!messageId && data.message_id) {
+    messageId = data.message_id;
+  }
+
   const { email, name } = parseAddress(fromRaw);
 
   const result = await ingestInboundEmail({
@@ -161,6 +178,7 @@ export async function POST(req: Request) {
     body,
     senderEmail: email,
     senderName: name,
+    messageId,
   });
 
   return NextResponse.json({
