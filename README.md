@@ -95,6 +95,7 @@ Copia `.env.local.example` → `.env.local`:
 | `SUPABASE_SERVICE_ROLE_KEY` | Webhook / escrituras privilegiadas |
 | `RESEND_API_KEY` | Envío de respuestas |
 | `RESEND_FROM_EMAIL` | Remitente verificado en Resend |
+| `RESEND_REPLY_TO` | Dirección inbound (`tickets@….resend.app`) |
 | `RESEND_WEBHOOK_SECRET` | `whsec_…` (Svix) o secreto compartido |
 | `HELP_DESK_DEMO_MODE` | `true` / `false` (opcional) |
 
@@ -114,7 +115,7 @@ El schema incluye:
 
 ### Saliente
 
-Las respuestas públicas usan Resend con asunto `[Ticket #1001] …`.
+Las respuestas públicas usan Resend con asunto `Re: …` (mismo tema que el correo del cliente), cabeceras `In-Reply-To` / `References` / `Thread-Index` (extendido) / `Thread-Topic`, y el número de ticket en el pie del mensaje. Así Outlook/Gmail mantienen la conversación.
 
 ### Entrante (webhook)
 
