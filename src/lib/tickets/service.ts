@@ -247,11 +247,11 @@ async function appendInboundComment(
 }
 
 /**
- * Threading rules (helpdesk-style):
+ * Threading rules (helpdesk-style conversation forever):
  * 1. Subject contains [Ticket #N] → append to that ticket
- * 2. Same sender + open/in_progress ticket with same normalized subject
- *    (Re:/Fw:/Rv:… stripped) → append to that thread
- * 3. Otherwise → create a new ticket (different subject = different ticket)
+ * 2. In-Reply-To / References match a stored Message-ID on a ticket → same thread
+ * 3. Same sender + open/in_progress + same normalized subject → same thread
+ * 4. Otherwise → create a new ticket
  */
 export async function ingestInboundEmail(input: {
   subject: string;
@@ -259,9 +259,17 @@ export async function ingestInboundEmail(input: {
   senderEmail: string;
   senderName: string | null;
   messageId?: string | null;
+  inReplyTo?: string | null;
+  referencesHeader?: string | null;
 }): Promise<{ ticket: Ticket; created: boolean }> {
   const ticketNumber = extractTicketNumber(input.subject);
   const messageId = input.messageId?.trim() || null;
+  const threadIds = [
+    input.inReplyTo,
+    ...(input.referencesHeader ?? "").split(/\s+/),
+  ]
+    .map((id) => id?.trim())
+    .filter((id): id is string => Boolean(id));
 
   if (isDemoMode()) {
     if (ticketNumber != null) {
@@ -270,6 +278,17 @@ export async function ingestInboundEmail(input: {
     }
 
     const openForSender = listOpenDemoTicketsBySender(input.senderEmail);
+    const byHeader = openForSender.find((t) => {
+      const known = [
+        t.last_email_message_id,
+        ...(t.email_references ?? "").split(/\s+/),
+      ]
+        .map((x) => x?.trim())
+        .filter(Boolean);
+      return threadIds.some((id) => known.includes(id));
+    });
+    if (byHeader) return appendInboundComment(byHeader, input.body, messageId);
+
     const sameSubject = openForSender.find((t) =>
       subjectsMatchForThread(input.subject, t.subject)
     );
@@ -295,6 +314,36 @@ export async function ingestInboundEmail(input: {
       .maybeSingle();
     if (existing) {
       return appendInboundComment(existing as Ticket, input.body, messageId);
+    }
+  }
+
+  if (threadIds.length > 0) {
+    const { data: byLastId } = await supabase
+      .from("tickets")
+      .select("*")
+      .in("last_email_message_id", threadIds)
+      .in("status", ["open", "in_progress", "resolved"])
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    if (byLastId?.[0]) {
+      return appendInboundComment(byLastId[0] as Ticket, input.body, messageId);
+    }
+
+    // Fallback: scan recent open tickets' references chain
+    const { data: recent } = await supabase
+      .from("tickets")
+      .select("*")
+      .in("status", ["open", "in_progress", "resolved"])
+      .not("email_references", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(50);
+    const matched = ((recent ?? []) as Ticket[]).find((t) => {
+      const known = (t.email_references ?? "").split(/\s+/).filter(Boolean);
+      if (t.last_email_message_id) known.push(t.last_email_message_id);
+      return threadIds.some((id) => known.includes(id));
+    });
+    if (matched) {
+      return appendInboundComment(matched, input.body, messageId);
     }
   }
 

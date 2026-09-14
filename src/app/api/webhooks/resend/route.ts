@@ -94,12 +94,16 @@ async function resolveInboundContent(data: {
   subject: string;
   body: string;
   messageId: string | null;
+  inReplyTo: string | null;
+  references: string | null;
 }> {
   let fromRaw = data.from ?? "";
   let subject = data.subject ?? "(sin asunto)";
   let text: string | null = data.text ?? null;
   let html: string | null = data.html ?? null;
   let messageId: string | null = data.message_id ?? null;
+  let inReplyTo: string | null = null;
+  let references: string | null = null;
 
   // Resend email.received webhooks only include metadata; fetch body via API.
   if (data.email_id && process.env.RESEND_API_KEY) {
@@ -113,12 +117,18 @@ async function resolveInboundContent(data: {
       subject = email.subject || subject;
       text = email.text ?? text;
       html = email.html ?? html;
-      const headers = email.headers as Record<string, string> | undefined;
+      const headers = (email.headers ?? {}) as Record<string, string>;
+      const headerGet = (name: string) =>
+        headers[name] ||
+        headers[name.toLowerCase()] ||
+        headers[name.replace(/\b\w/g, (c) => c.toUpperCase())];
+
       messageId =
         (email as { message_id?: string }).message_id ||
-        headers?.["message-id"] ||
-        headers?.["Message-ID"] ||
+        headerGet("message-id") ||
         messageId;
+      inReplyTo = headerGet("in-reply-to") || null;
+      references = headerGet("references") || null;
     }
   }
 
@@ -127,7 +137,7 @@ async function resolveInboundContent(data: {
     (html ? stripHtml(html) : "") ||
     "(mensaje vacío)";
 
-  return { fromRaw, subject, body, messageId };
+  return { fromRaw, subject, body, messageId, inReplyTo, references };
 }
 
 export async function POST(req: Request) {
@@ -155,8 +165,11 @@ export async function POST(req: Request) {
   let subject: string;
   let body: string;
   let messageId: string | null;
+  let inReplyTo: string | null;
+  let references: string | null;
   try {
-    ({ fromRaw, subject, body, messageId } = await resolveInboundContent(data));
+    ({ fromRaw, subject, body, messageId, inReplyTo, references } =
+      await resolveInboundContent(data));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al leer el correo";
     return NextResponse.json({ error: message }, { status: 502 });
@@ -179,6 +192,8 @@ export async function POST(req: Request) {
     senderEmail: email,
     senderName: name,
     messageId,
+    inReplyTo,
+    referencesHeader: references,
   });
 
   return NextResponse.json({
