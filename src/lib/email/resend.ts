@@ -29,6 +29,9 @@ export async function sendTicketReplyEmail(input: {
   inReplyTo?: string | null;
   /** Existing References chain */
   references?: string | null;
+  /** Outlook conversation headers */
+  threadIndex?: string | null;
+  threadTopic?: string | null;
 }): Promise<{
   ok: boolean;
   id?: string;
@@ -67,6 +70,18 @@ export async function sendTicketReplyEmail(input: {
     headers["In-Reply-To"] = input.inReplyTo;
     headers.References = appendReference(input.references, input.inReplyTo);
   }
+  // Outlook conversation view
+  if (input.threadTopic) {
+    headers["Thread-Topic"] = input.threadTopic;
+  } else {
+    headers["Thread-Topic"] = input.subject
+      .replace(/^\s*((re|fw|fwd|rv)\s*:\s*)+/i, "")
+      .replace(/\s*\[Ticket\s*#\d+\]\s*/gi, " ")
+      .trim();
+  }
+  if (input.threadIndex) {
+    headers["Thread-Index"] = input.threadIndex;
+  }
 
   const { data, error } = await resend.emails.send({
     from,
@@ -74,7 +89,7 @@ export async function sendTicketReplyEmail(input: {
     ...(replyTo ? { replyTo } : {}),
     subject: taggedSubject,
     text: `${input.body}\n\n— ${input.agentName}\nSoporte IT`,
-    ...(Object.keys(headers).length ? { headers } : {}),
+    headers,
   });
 
   if (error) {
@@ -87,7 +102,7 @@ export async function sendTicketReplyEmail(input: {
       const { data: sent } = await resend.emails.get(data.id);
       messageId = sent?.message_id ?? undefined;
     } catch {
-      // non-fatal: threading still works for next inbound via [Ticket #N]
+      // non-fatal
     }
   }
 

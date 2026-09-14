@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { Webhook } from "svix";
+import {
+  headerGet,
+  resolveOriginalMessageId,
+  resolveThreadHeaders,
+} from "@/lib/email/headers";
 import { isDemoMode } from "@/lib/env";
 import { ingestInboundEmail } from "@/lib/tickets/service";
 
@@ -15,7 +20,6 @@ type ResendInboundPayload = {
     email_id?: string;
     message_id?: string;
   };
-  // Alternate / simplified shapes for local testing
   from?: string;
   subject?: string;
   text?: string;
@@ -49,13 +53,11 @@ function stripHtml(html: string): string {
 function verifyWebhook(req: Request, body: string): boolean {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
 
-  // Shared-secret header fallback (document in README)
   const shared = req.headers.get("x-webhook-secret");
   if (secret && shared && shared === secret) {
     return true;
   }
 
-  // Svix signature verification (Resend webhooks)
   if (secret?.startsWith("whsec_")) {
     const svixId = req.headers.get("svix-id");
     const svixTimestamp = req.headers.get("svix-timestamp");
@@ -74,7 +76,6 @@ function verifyWebhook(req: Request, body: string): boolean {
     }
   }
 
-  // Demo / local: allow when no secret configured
   if (!secret || isDemoMode()) {
     return true;
   }
@@ -96,16 +97,16 @@ async function resolveInboundContent(data: {
   messageId: string | null;
   inReplyTo: string | null;
   references: string | null;
+  threadIndex: string | null;
+  threadTopic: string | null;
 }> {
   let fromRaw = data.from ?? "";
   let subject = data.subject ?? "(sin asunto)";
   let text: string | null = data.text ?? null;
   let html: string | null = data.html ?? null;
-  let messageId: string | null = data.message_id ?? null;
-  let inReplyTo: string | null = null;
-  let references: string | null = null;
+  let headers: Record<string, string> = {};
+  let webhookMessageId: string | null = data.message_id ?? null;
 
-  // Resend email.received webhooks only include metadata; fetch body via API.
   if (data.email_id && process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { data: email, error } = await resend.emails.receiving.get(data.email_id);
@@ -117,27 +118,37 @@ async function resolveInboundContent(data: {
       subject = email.subject || subject;
       text = email.text ?? text;
       html = email.html ?? html;
-      const headers = (email.headers ?? {}) as Record<string, string>;
-      const headerGet = (name: string) =>
-        headers[name] ||
-        headers[name.toLowerCase()] ||
-        headers[name.replace(/\b\w/g, (c) => c.toUpperCase())];
-
-      messageId =
+      headers = (email.headers ?? {}) as Record<string, string>;
+      webhookMessageId =
         (email as { message_id?: string }).message_id ||
-        headerGet("message-id") ||
-        messageId;
-      inReplyTo = headerGet("in-reply-to") || null;
-      references = headerGet("references") || null;
+        headerGet(headers, "Message-ID") ||
+        webhookMessageId;
     }
   }
+
+  const messageId = resolveOriginalMessageId({
+    messageId: webhookMessageId,
+    headers,
+  });
+  const { threadIndex, threadTopic } = resolveThreadHeaders(headers);
+  const inReplyTo = headerGet(headers, "In-Reply-To");
+  const references = headerGet(headers, "References");
 
   const body =
     (text || "").trim() ||
     (html ? stripHtml(html) : "") ||
     "(mensaje vacío)";
 
-  return { fromRaw, subject, body, messageId, inReplyTo, references };
+  return {
+    fromRaw,
+    subject,
+    body,
+    messageId,
+    inReplyTo,
+    references,
+    threadIndex,
+    threadTopic,
+  };
 }
 
 export async function POST(req: Request) {
@@ -154,7 +165,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  // Ignore unrelated webhook event types if present
   if (payload.type && payload.type !== "email.received") {
     return NextResponse.json({ ok: true, ignored: payload.type });
   }
@@ -167,9 +177,19 @@ export async function POST(req: Request) {
   let messageId: string | null;
   let inReplyTo: string | null;
   let references: string | null;
+  let threadIndex: string | null;
+  let threadTopic: string | null;
   try {
-    ({ fromRaw, subject, body, messageId, inReplyTo, references } =
-      await resolveInboundContent(data));
+    ({
+      fromRaw,
+      subject,
+      body,
+      messageId,
+      inReplyTo,
+      references,
+      threadIndex,
+      threadTopic,
+    } = await resolveInboundContent(data));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al leer el correo";
     return NextResponse.json({ error: message }, { status: 502 });
@@ -179,7 +199,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Falta el remitente" }, { status: 400 });
   }
 
-  // Prefer message_id from webhook payload when present
   if (!messageId && data.message_id) {
     messageId = data.message_id;
   }
@@ -194,6 +213,8 @@ export async function POST(req: Request) {
     messageId,
     inReplyTo,
     referencesHeader: references,
+    threadIndex,
+    threadTopic,
   });
 
   return NextResponse.json({

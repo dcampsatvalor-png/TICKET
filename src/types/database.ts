@@ -20,6 +20,8 @@ export type Ticket = {
   updated_at: string;
   last_email_message_id?: string | null;
   email_references?: string | null;
+  email_thread_index?: string | null;
+  email_thread_topic?: string | null;
 };
 
 export type TicketComment = {

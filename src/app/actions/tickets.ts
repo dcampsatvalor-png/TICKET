@@ -65,6 +65,8 @@ export async function replyAction(input: {
       agentName: profile.full_name,
       inReplyTo: ticket.last_email_message_id,
       references: ticket.email_references,
+      threadIndex: ticket.email_thread_index,
+      threadTopic: ticket.email_thread_topic ?? ticket.subject,
     });
     if (!emailResult.ok) {
       return {

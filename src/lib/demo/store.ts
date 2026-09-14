@@ -238,6 +238,8 @@ export function createDemoTicket(input: {
   senderEmail: string;
   senderName: string | null;
   messageId?: string | null;
+  threadIndex?: string | null;
+  threadTopic?: string | null;
 }): Ticket {
   const store = getStore();
   const now = new Date().toISOString();
@@ -254,6 +256,8 @@ export function createDemoTicket(input: {
     updated_at: now,
     last_email_message_id: input.messageId ?? null,
     email_references: input.messageId ?? null,
+    email_thread_index: input.threadIndex ?? null,
+    email_thread_topic: input.threadTopic ?? null,
   };
   store.tickets.unshift(ticket);
   return ticket;
