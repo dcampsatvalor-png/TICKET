@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { Webhook } from "svix";
 import { isDemoMode } from "@/lib/env";
 import { ingestInboundEmail } from "@/lib/tickets/service";
@@ -7,6 +8,7 @@ type ResendInboundPayload = {
   type?: string;
   data?: {
     from?: string;
+    to?: string[] | string;
     subject?: string;
     text?: string | null;
     html?: string | null;
@@ -78,6 +80,44 @@ function verifyWebhook(req: Request, body: string): boolean {
   return false;
 }
 
+async function resolveInboundContent(data: NonNullable<ResendInboundPayload["data"]> & {
+  from?: string;
+  subject?: string;
+  text?: string;
+  html?: string;
+}): Promise<{
+  fromRaw: string;
+  subject: string;
+  body: string;
+}> {
+  let fromRaw = data.from ?? "";
+  let subject = data.subject ?? "(sin asunto)";
+  let text = data.text ?? null;
+  let html = data.html ?? null;
+
+  // Resend email.received webhooks only include metadata; fetch body via API.
+  if (data.email_id && process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { data: email, error } = await resend.emails.receiving.get(data.email_id);
+    if (error) {
+      throw new Error(error.message);
+    }
+    if (email) {
+      fromRaw = email.from || fromRaw;
+      subject = email.subject || subject;
+      text = email.text ?? text;
+      html = email.html ?? html;
+    }
+  }
+
+  const body =
+    (text || "").trim() ||
+    (html ? stripHtml(html) : "") ||
+    "(mensaje vacío)";
+
+  return { fromRaw, subject, body };
+}
+
 export async function POST(req: Request) {
   const rawBody = await req.text();
 
@@ -92,17 +132,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
+  // Ignore unrelated webhook event types if present
+  if (payload.type && payload.type !== "email.received") {
+    return NextResponse.json({ ok: true, ignored: payload.type });
+  }
+
   const data = payload.data ?? payload;
-  const fromRaw = data.from;
-  const subject = data.subject ?? "(sin asunto)";
-  const text = data.text ?? (data.html ? stripHtml(data.html) : "");
+
+  let fromRaw: string;
+  let subject: string;
+  let body: string;
+  try {
+    ({ fromRaw, subject, body } = await resolveInboundContent(data));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error al leer el correo";
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 
   if (!fromRaw) {
     return NextResponse.json({ error: "Falta el remitente" }, { status: 400 });
   }
 
   const { email, name } = parseAddress(fromRaw);
-  const body = (text || "").trim() || "(mensaje vacío)";
 
   const result = await ingestInboundEmail({
     subject,
