@@ -3,14 +3,18 @@ import {
   addDemoComment,
   createDemoTicket,
   findDemoTicketByNumber,
-  findOpenDemoTicketBySender,
   getDemoAgents,
   getDemoCurrentUser,
   getDemoTicket,
   listDemoTickets,
+  listOpenDemoTicketsBySender,
   updateDemoTicketAssignee,
   updateDemoTicketStatus,
 } from "@/lib/demo/store";
+import {
+  extractTicketNumber,
+  normalizeEmailSubject,
+} from "@/lib/email/threading";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type {
   AssignmentFilter,
@@ -167,40 +171,73 @@ export async function addComment(input: {
   return data as TicketComment;
 }
 
-/** Inbound webhook helpers (service role or demo). */
+function cleanTicketSubject(subject: string): string {
+  return (
+    subject.replace(/\s*\[Ticket\s*#\d+\]\s*/gi, "").trim() || subject.trim() || "(sin asunto)"
+  );
+}
+
+function subjectsMatchForThread(emailSubject: string, ticketSubject: string): boolean {
+  const a = normalizeEmailSubject(emailSubject);
+  const b = normalizeEmailSubject(ticketSubject);
+  return Boolean(a && b && a === b);
+}
+
+async function appendInboundComment(
+  ticket: Ticket,
+  body: string
+): Promise<{ ticket: Ticket; created: false }> {
+  if (isDemoMode()) {
+    addDemoComment({
+      ticketId: ticket.id,
+      authorId: null,
+      content: body,
+      isInternal: false,
+    });
+    return { ticket, created: false };
+  }
+
+  const supabase = createServiceClient();
+  const now = new Date().toISOString();
+  await supabase.from("ticket_comments").insert({
+    ticket_id: ticket.id,
+    author_id: null,
+    content: body,
+    is_internal: false,
+  });
+  await supabase.from("tickets").update({ updated_at: now }).eq("id", ticket.id);
+  return { ticket, created: false };
+}
+
+/**
+ * Threading rules (helpdesk-style):
+ * 1. Subject contains [Ticket #N] → append to that ticket
+ * 2. Same sender + open/in_progress ticket with same normalized subject
+ *    (Re:/Fw:/Rv:… stripped) → append to that thread
+ * 3. Otherwise → create a new ticket (different subject = different ticket)
+ */
 export async function ingestInboundEmail(input: {
   subject: string;
   body: string;
   senderEmail: string;
   senderName: string | null;
 }): Promise<{ ticket: Ticket; created: boolean }> {
-  const ticketNumberMatch = input.subject.match(/\[Ticket\s*#(\d+)\]/i);
+  const ticketNumber = extractTicketNumber(input.subject);
 
   if (isDemoMode()) {
-    if (ticketNumberMatch) {
-      const existing = findDemoTicketByNumber(Number(ticketNumberMatch[1]));
-      if (existing) {
-        addDemoComment({
-          ticketId: existing.id,
-          authorId: null,
-          content: input.body,
-          isInternal: false,
-        });
-        return { ticket: existing, created: false };
-      }
+    if (ticketNumber != null) {
+      const existing = findDemoTicketByNumber(ticketNumber);
+      if (existing) return appendInboundComment(existing, input.body);
     }
-    const open = findOpenDemoTicketBySender(input.senderEmail);
-    if (open) {
-      addDemoComment({
-        ticketId: open.id,
-        authorId: null,
-        content: input.body,
-        isInternal: false,
-      });
-      return { ticket: open, created: false };
-    }
+
+    const openForSender = listOpenDemoTicketsBySender(input.senderEmail);
+    const sameSubject = openForSender.find((t) =>
+      subjectsMatchForThread(input.subject, t.subject)
+    );
+    if (sameSubject) return appendInboundComment(sameSubject, input.body);
+
     const ticket = createDemoTicket({
-      subject: input.subject.replace(/\s*\[Ticket\s*#\d+\]\s*/gi, "").trim() || input.subject,
+      subject: cleanTicketSubject(input.subject),
       description: input.body,
       senderEmail: input.senderEmail,
       senderName: input.senderName,
@@ -210,20 +247,14 @@ export async function ingestInboundEmail(input: {
 
   const supabase = createServiceClient();
 
-  if (ticketNumberMatch) {
+  if (ticketNumber != null) {
     const { data: existing } = await supabase
       .from("tickets")
       .select("*")
-      .eq("ticket_number", Number(ticketNumberMatch[1]))
+      .eq("ticket_number", ticketNumber)
       .maybeSingle();
     if (existing) {
-      await supabase.from("ticket_comments").insert({
-        ticket_id: existing.id,
-        author_id: null,
-        content: input.body,
-        is_internal: false,
-      });
-      return { ticket: existing as Ticket, created: false };
+      return appendInboundComment(existing as Ticket, input.body);
     }
   }
 
@@ -232,22 +263,17 @@ export async function ingestInboundEmail(input: {
     .select("*")
     .ilike("sender_email", input.senderEmail)
     .in("status", ["open", "in_progress"])
-    .order("updated_at", { ascending: false })
-    .limit(1);
+    .order("updated_at", { ascending: false });
 
-  const open = openTickets?.[0] as Ticket | undefined;
-  if (open) {
-    await supabase.from("ticket_comments").insert({
-      ticket_id: open.id,
-      author_id: null,
-      content: input.body,
-      is_internal: false,
-    });
-    return { ticket: open, created: false };
+  const openList = (openTickets ?? []) as Ticket[];
+  const sameSubject = openList.find((t) =>
+    subjectsMatchForThread(input.subject, t.subject)
+  );
+  if (sameSubject) {
+    return appendInboundComment(sameSubject, input.body);
   }
 
-  const subject =
-    input.subject.replace(/\s*\[Ticket\s*#\d+\]\s*/gi, "").trim() || input.subject;
+  const subject = cleanTicketSubject(input.subject);
 
   const { data: created, error } = await supabase
     .from("tickets")

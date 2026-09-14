@@ -249,6 +249,16 @@ export function findOpenDemoTicketBySender(email: string): Ticket | null {
   );
 }
 
+export function listOpenDemoTicketsBySender(email: string): Ticket[] {
+  const store = getStore();
+  const normalized = email.toLowerCase();
+  return store.tickets.filter(
+    (t) =>
+      t.sender_email.toLowerCase() === normalized &&
+      (t.status === "open" || t.status === "in_progress")
+  );
+}
+
 export function findDemoTicketByNumber(ticketNumber: number): Ticket | null {
   return getStore().tickets.find((t) => t.ticket_number === ticketNumber) ?? null;
 }
