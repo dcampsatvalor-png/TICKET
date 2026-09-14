@@ -173,19 +173,23 @@ export function getDemoTicket(id: string): TicketWithRelations | null {
 
 export function updateDemoTicketEmailThread(
   id: string,
-  messageId: string,
-  previousReferences?: string | null
+  messageId: string | null | undefined,
+  previousReferences?: string | null,
+  threadIndex?: string | null
 ): Ticket | null {
   const store = getStore();
   const ticket = store.tickets.find((t) => t.id === id);
   if (!ticket) return null;
-  const parts = (previousReferences ?? ticket.email_references ?? "")
-    .split(/\s+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (!parts.includes(messageId)) parts.push(messageId);
-  ticket.last_email_message_id = messageId;
-  ticket.email_references = parts.join(" ");
+  if (messageId) {
+    const parts = (previousReferences ?? ticket.email_references ?? "")
+      .split(/\s+/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (!parts.includes(messageId)) parts.push(messageId);
+    ticket.last_email_message_id = messageId;
+    ticket.email_references = parts.join(" ");
+  }
+  if (threadIndex) ticket.email_thread_index = threadIndex;
   ticket.updated_at = new Date().toISOString();
   return ticket;
 }

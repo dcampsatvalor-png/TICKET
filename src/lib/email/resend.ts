@@ -1,14 +1,9 @@
 import { Resend } from "resend";
+import {
+  bareConversationSubject,
+  extendThreadIndex,
+} from "@/lib/email/thread-index";
 import { hasResendConfigured } from "@/lib/env";
-
-function buildReplySubject(ticketNumber: number, subject: string): string {
-  const bare = subject
-    .replace(/^\s*((re|fw|fwd|rv|aw|sv)\s*(\[\d+\])?\s*:\s*)+/i, "")
-    .replace(/\s*\[Ticket\s*#\d+\]\s*/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return `Re: [Ticket #${ticketNumber}] ${bare || subject}`;
-}
 
 function appendReference(existing: string | null | undefined, messageId: string): string {
   const parts = (existing ?? "")
@@ -36,10 +31,21 @@ export async function sendTicketReplyEmail(input: {
   ok: boolean;
   id?: string;
   messageId?: string;
+  /** Thread-Index actually sent (extended); store for the next reply */
+  threadIndex?: string;
   mocked?: boolean;
   error?: string;
 }> {
-  const taggedSubject = buildReplySubject(input.ticketNumber, input.subject);
+  // Keep client subject as a normal "Re: …" so Outlook/Gmail stay in-thread.
+  // Ticket number goes in the body (matching still uses Message-ID / References).
+  const topic =
+    (input.threadTopic?.trim() || bareConversationSubject(input.subject)) ||
+    input.subject;
+  const taggedSubject = `Re: ${topic}`;
+
+  const outboundThreadIndex = input.threadIndex
+    ? extendThreadIndex(input.threadIndex) ?? undefined
+    : undefined;
 
   if (!hasResendConfigured()) {
     console.info("[demo/email] Would send reply via Resend", {
@@ -47,6 +53,7 @@ export async function sendTicketReplyEmail(input: {
       subject: taggedSubject,
       from: process.env.RESEND_FROM_EMAIL ?? "helpdesk@demo.local",
       inReplyTo: input.inReplyTo,
+      threadIndex: outboundThreadIndex,
       preview: input.body.slice(0, 120),
     });
     return {
@@ -54,6 +61,7 @@ export async function sendTicketReplyEmail(input: {
       mocked: true,
       id: `demo-email-${Date.now()}`,
       messageId: `<demo-${Date.now()}@local>`,
+      threadIndex: outboundThreadIndex,
     };
   }
 
@@ -65,22 +73,15 @@ export async function sendTicketReplyEmail(input: {
     process.env.RESEND_INBOUND_EMAIL ||
     undefined;
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    "Thread-Topic": topic,
+  };
   if (input.inReplyTo) {
     headers["In-Reply-To"] = input.inReplyTo;
     headers.References = appendReference(input.references, input.inReplyTo);
   }
-  // Outlook conversation view
-  if (input.threadTopic) {
-    headers["Thread-Topic"] = input.threadTopic;
-  } else {
-    headers["Thread-Topic"] = input.subject
-      .replace(/^\s*((re|fw|fwd|rv)\s*:\s*)+/i, "")
-      .replace(/\s*\[Ticket\s*#\d+\]\s*/gi, " ")
-      .trim();
-  }
-  if (input.threadIndex) {
-    headers["Thread-Index"] = input.threadIndex;
+  if (outboundThreadIndex) {
+    headers["Thread-Index"] = outboundThreadIndex;
   }
 
   const { data, error } = await resend.emails.send({
@@ -88,7 +89,7 @@ export async function sendTicketReplyEmail(input: {
     to: input.to,
     ...(replyTo ? { replyTo } : {}),
     subject: taggedSubject,
-    text: `${input.body}\n\n— ${input.agentName}\nSoporte IT`,
+    text: `${input.body}\n\n— ${input.agentName}\nSoporte IT · Ticket #${input.ticketNumber}`,
     headers,
   });
 
@@ -106,5 +107,10 @@ export async function sendTicketReplyEmail(input: {
     }
   }
 
-  return { ok: true, id: data?.id, messageId };
+  return {
+    ok: true,
+    id: data?.id,
+    messageId,
+    threadIndex: outboundThreadIndex,
+  };
 }

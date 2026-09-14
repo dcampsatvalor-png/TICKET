@@ -74,11 +74,12 @@ export async function replyAction(input: {
         error: emailResult.error ?? "No se pudo enviar el correo.",
       };
     }
-    if (emailResult.messageId) {
+    if (emailResult.messageId || emailResult.threadIndex) {
       await updateTicketEmailThread(
         ticket.id,
         emailResult.messageId,
-        ticket.email_references
+        ticket.email_references,
+        emailResult.threadIndex ?? null
       );
     }
   }

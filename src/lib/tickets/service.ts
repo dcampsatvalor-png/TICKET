@@ -418,21 +418,30 @@ export async function ingestInboundEmail(input: {
 
 export async function updateTicketEmailThread(
   ticketId: string,
-  messageId: string,
-  previousReferences?: string | null
+  messageId: string | null | undefined,
+  previousReferences?: string | null,
+  threadIndex?: string | null
 ): Promise<void> {
   if (isDemoMode()) {
-    updateDemoTicketEmailThread(ticketId, messageId, previousReferences);
+    updateDemoTicketEmailThread(
+      ticketId,
+      messageId,
+      previousReferences,
+      threadIndex
+    );
     return;
   }
 
   const supabase = createServiceClient();
-  await supabase
-    .from("tickets")
-    .update({
-      last_email_message_id: messageId,
-      email_references: appendMessageIdChain(previousReferences, messageId),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", ticketId);
+  const patch: Record<string, string> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (messageId) {
+    patch.last_email_message_id = messageId;
+    patch.email_references = appendMessageIdChain(previousReferences, messageId);
+  }
+  if (threadIndex) patch.email_thread_index = threadIndex;
+  if (!messageId && !threadIndex) return;
+
+  await supabase.from("tickets").update(patch).eq("id", ticketId);
 }

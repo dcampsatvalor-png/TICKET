@@ -42,11 +42,17 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 HELP_DESK_DEMO_MODE=false
-RESEND_API_KEY=re_...          # opcional al inicio
-RESEND_FROM_EMAIL=soporte@tu-dominio.com
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=SOPORTE IT <soporte@grupoatvalor.com>
+RESEND_REPLY_TO=tickets@pelioluu.resend.app
 RESEND_WEBHOOK_SECRET=whsec_... # o un secreto compartido
 ```
 
+Importante para que la respuesta del agente aparezca **en la misma conversación de Outlook**:
+
+1. En Vercel, `RESEND_REPLY_TO` debe estar definida y luego **Redeploy**.
+2. La regla de Outlook debe **redirigir / BCC / copiar** a `tickets@pelioluu.resend.app`, **no reenviar** (Forward inventa otro Message-ID).
+3. Tras cada cambio de código, confirma que Vercel desplegó el último commit de GitHub.
 5. Deploy. URL tipo `https://mesa-de-ayuda.vercel.app`.
 
 ### 4. Auth: URL de redirección
