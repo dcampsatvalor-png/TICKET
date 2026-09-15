@@ -67,11 +67,9 @@ export async function sendTicketReplyEmail(input: {
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   const from = process.env.RESEND_FROM_EMAIL!;
-  // So the client's "Reply" goes back into Resend inbound → ticket thread
-  const replyTo =
-    process.env.RESEND_REPLY_TO ||
-    process.env.RESEND_INBOUND_EMAIL ||
-    undefined;
+  // Prefer explicit Reply-To. Do NOT fall back to Resend inbound (….resend.app):
+  // clients should reply to incidencias@…; Outlook copies that mail into Resend.
+  const replyTo = process.env.RESEND_REPLY_TO || undefined;
 
   const headers: Record<string, string> = {
     "Thread-Topic": topic,

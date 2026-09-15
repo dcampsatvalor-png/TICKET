@@ -94,8 +94,9 @@ Copia `.env.local.example` → `.env.local`:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima (cliente) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Webhook / escrituras privilegiadas |
 | `RESEND_API_KEY` | Envío de respuestas |
-| `RESEND_FROM_EMAIL` | Remitente verificado en Resend |
-| `RESEND_REPLY_TO` | Dirección inbound (`tickets@….resend.app`) |
+| `RESEND_FROM_EMAIL` | Remitente, p. ej. `SOPORTE IT <incidencias@grupoatvalor.com>` |
+| `RESEND_REPLY_TO` | Opcional; si falta, el cliente responde a `incidencias@` |
+| `RESEND_INBOUND_EMAIL` | Destino de la regla Outlook (`tickets@….resend.app`) |
 | `RESEND_WEBHOOK_SECRET` | `whsec_…` (Svix) o secreto compartido |
 | `HELP_DESK_DEMO_MODE` | `true` / `false` (opcional) |
 
@@ -113,9 +114,12 @@ El schema incluye:
 
 ## Configurar Resend (inbound + outbound)
 
+**Buzón público:** `incidencias@grupoatvalor.com` (Outlook).  
+**Copia técnica a Resend:** regla Redirect/BCC → `tickets@….resend.app` (detalle en [DEPLOY.md](./DEPLOY.md)).
+
 ### Saliente
 
-Las respuestas públicas usan Resend con asunto `Re: …` (mismo tema que el correo del cliente), cabeceras `In-Reply-To` / `References` / `Thread-Index` (extendido) / `Thread-Topic`, y el número de ticket en el pie del mensaje. Así Outlook/Gmail mantienen la conversación.
+Las respuestas públicas salen como `incidencias@grupoatvalor.com` con asunto `Re: …`, cabeceras `In-Reply-To` / `References` / `Thread-Index` (extendido) / `Thread-Topic`, y el número de ticket en el pie. El cliente responde a `incidencias@`; la regla lo vuelve a copiar a Resend → mismo ticket.
 
 ### Entrante (webhook)
 
@@ -129,8 +133,9 @@ Seguridad (cualquiera de estas):
 
 Lógica:
 
-- Si el asunto contiene `[Ticket #N]` → añade comentario público a ese ticket
-- Si no, y el remitente tiene un ticket `open`/`in_progress` → añade comentario
+- Si el asunto contiene `[Ticket #N]` → mismo ticket
+- Si `In-Reply-To` / `References` coinciden con un Message-ID guardado → mismo ticket
+- Si mismo remitente + mismo asunto normalizado y ticket abierto → mismo ticket
 - Si no → crea ticket nuevo `open`
 
 Ejemplo local:
