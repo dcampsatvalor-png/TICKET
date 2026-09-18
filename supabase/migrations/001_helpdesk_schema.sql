@@ -6,7 +6,7 @@ create extension if not exists "pgcrypto";
 
 -- Enums
 do $$ begin
-  create type public.ticket_status as enum ('open', 'in_progress', 'resolved', 'closed');
+  create type public.ticket_status as enum ('open', 'in_progress', 'resolved', 'closed', 'cancelled');
 exception
   when duplicate_object then null;
 end $$;

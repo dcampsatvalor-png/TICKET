@@ -10,6 +10,7 @@ const STATUS_STYLES: Record<TicketStatus, string> = {
   in_progress: "bg-amber-100 text-amber-900 border-amber-200",
   resolved: "bg-teal-100 text-teal-900 border-teal-200",
   closed: "bg-slate-100 text-slate-700 border-slate-200",
+  cancelled: "bg-red-100 text-red-800 border-red-300",
 };
 
 export function StatusBadge({ status }: { status: TicketStatus }) {

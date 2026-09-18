@@ -13,6 +13,8 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Abierto" },
   { value: "in_progress", label: "En proceso" },
   { value: "resolved", label: "Resuelto" },
+  { value: "closed", label: "Cerrado" },
+  { value: "cancelled", label: "Anulado" },
 ];
 
 const ASSIGNMENT_OPTIONS: { value: AssignmentFilter; label: string }[] = [

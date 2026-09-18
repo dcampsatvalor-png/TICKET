@@ -1,4 +1,9 @@
-export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
+export type TicketStatus =
+  | "open"
+  | "in_progress"
+  | "resolved"
+  | "closed"
+  | "cancelled";
 
 export type Profile = {
   id: string;
@@ -50,4 +55,5 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   in_progress: "En proceso",
   resolved: "Resuelto",
   closed: "Cerrado",
+  cancelled: "Anulado",
 };
