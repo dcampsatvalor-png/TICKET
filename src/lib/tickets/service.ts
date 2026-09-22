@@ -91,7 +91,7 @@ export async function listTickets(filters: {
   if (filters.assignment === "mine") {
     query = query.eq("assigned_to", profile.id);
   } else if (filters.assignment === "unassigned") {
-    query = query.is("assigned_to", null);
+    query = query.is("assigned_to", null).neq("status", "cancelled");
   }
 
   const { data, error } = await query;

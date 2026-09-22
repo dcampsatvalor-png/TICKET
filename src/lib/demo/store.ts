@@ -214,7 +214,9 @@ export function listDemoTickets(filters: {
     .filter((t) => ticketMatchesStatusFilter(t.status, filters.status))
     .filter((t) => {
       if (filters.assignment === "mine") return t.assigned_to === filters.currentUserId;
-      if (filters.assignment === "unassigned") return t.assigned_to === null;
+      if (filters.assignment === "unassigned") {
+        return t.assigned_to === null && t.status !== "cancelled";
+      }
       return true;
     })
     .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))

@@ -81,6 +81,9 @@ function buildAnalytics(
   }
 
   for (const t of createdInRange) {
+    // Cancelled + unassigned should not inflate the "Sin asignar" bucket
+    if (!t.assigned_to && t.status === "cancelled") continue;
+
     const id = t.assigned_to;
     const row =
       agentMap.get(id) ??
@@ -108,7 +111,9 @@ function buildAnalytics(
     rangeLabel: formatRangeLabel(range.from, range.to),
     totals: {
       created: createdInRange.length,
-      unassignedCreated: createdInRange.filter((t) => !t.assigned_to).length,
+      unassignedCreated: createdInRange.filter(
+        (t) => !t.assigned_to && t.status !== "cancelled"
+      ).length,
       avgPerDay: Math.round((createdInRange.length / daySpan) * 10) / 10,
     },
     byStatus: (
