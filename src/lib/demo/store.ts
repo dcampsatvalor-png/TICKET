@@ -80,6 +80,66 @@ function seedStore(): DemoStore {
       created_at: hoursAgo(72),
       updated_at: hoursAgo(12),
     },
+    {
+      id: "demo-ticket-4",
+      ticket_number: 1004,
+      subject: "Restablecer contraseña Office 365",
+      description: "No puedo entrar al correo. He intentado restablecer la clave sin éxito.",
+      sender_email: "sofia.lopez@cliente.com",
+      sender_name: "Sofía López",
+      status: "resolved",
+      assigned_to: "demo-agent-1",
+      created_at: hoursAgo(96),
+      updated_at: hoursAgo(90),
+    },
+    {
+      id: "demo-ticket-5",
+      ticket_number: 1005,
+      subject: "Monitor sin señal",
+      description: "El monitor de mi puesto se queda en negro al encender el PC.",
+      sender_email: "jorge.navarro@cliente.com",
+      sender_name: "Jorge Navarro",
+      status: "closed",
+      assigned_to: "demo-agent-2",
+      created_at: hoursAgo(140),
+      updated_at: hoursAgo(120),
+    },
+    {
+      id: "demo-ticket-6",
+      ticket_number: 1006,
+      subject: "Acceso carpeta compartida Contabilidad",
+      description: "Necesito permisos de lectura en \\\\fileserver\\contabilidad.",
+      sender_email: "marta.ruiz@cliente.com",
+      sender_name: "Marta Ruiz",
+      status: "resolved",
+      assigned_to: "demo-agent-1",
+      created_at: hoursAgo(200),
+      updated_at: hoursAgo(180),
+    },
+    {
+      id: "demo-ticket-7",
+      ticket_number: 1007,
+      subject: "Outlook no sincroniza",
+      description: "Outlook se queda en «Actualizando carpeta de bandeja de entrada».",
+      sender_email: "pedro.gil@cliente.com",
+      sender_name: "Pedro Gil",
+      status: "cancelled",
+      assigned_to: "demo-agent-2",
+      created_at: hoursAgo(48),
+      updated_at: hoursAgo(40),
+    },
+    {
+      id: "demo-ticket-8",
+      ticket_number: 1008,
+      subject: "Instalar Teams en portátil nuevo",
+      description: "Me han entregado un portátil sin Teams. ¿Podéis instalarlo?",
+      sender_email: "elena.diaz@cliente.com",
+      sender_name: "Elena Díaz",
+      status: "in_progress",
+      assigned_to: "demo-agent-1",
+      created_at: hoursAgo(10),
+      updated_at: hoursAgo(2),
+    },
   ];
 
   const comments: TicketComment[] = [
@@ -115,7 +175,7 @@ function seedStore(): DemoStore {
     profiles: DEMO_AGENTS,
     tickets,
     comments,
-    nextTicketNumber: 1004,
+    nextTicketNumber: 1009,
   };
 }
 
@@ -128,6 +188,15 @@ function getStore(): DemoStore {
 
 export function getDemoAgents(): Profile[] {
   return getStore().profiles;
+}
+
+/** All tickets with assignee for analytics (no filters). */
+export function listAllDemoTicketsWithAssignee(): TicketListItem[] {
+  const store = getStore();
+  return store.tickets.map((ticket) => ({
+    ...ticket,
+    assignee: store.profiles.find((p) => p.id === ticket.assigned_to) ?? null,
+  }));
 }
 
 export function getDemoCurrentUser(): Profile {
