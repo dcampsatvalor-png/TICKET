@@ -185,11 +185,11 @@ export function ReportsView({
             Cómo están ahora las incidencias del periodo
           </p>
         </div>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="flex flex-wrap gap-x-8 gap-y-3">
           {analytics.byStatus.map((row) => (
             <li
               key={row.status}
-              className="flex items-center justify-between gap-3"
+              className="flex items-center gap-2"
             >
               <StatusBadge status={row.status} />
               <span className="font-heading text-lg font-semibold tabular-nums text-slate-900">
