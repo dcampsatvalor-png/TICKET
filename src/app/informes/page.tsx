@@ -4,7 +4,6 @@ import { ReportsView } from "@/components/analytics/reports-view";
 import { getTicketAnalytics } from "@/lib/analytics/service";
 import {
   madridDateKey,
-  parseGranularity,
   resolveDateRange,
 } from "@/lib/analytics/period";
 import { getCurrentProfile } from "@/lib/tickets/service";
@@ -15,7 +14,6 @@ export default async function InformesPage({
 }: {
   searchParams: Promise<{
     periodo?: string;
-    agrupar?: string;
     desde?: string;
     hasta?: string;
   }>;
@@ -31,8 +29,7 @@ export default async function InformesPage({
     from: params.desde,
     to: params.hasta,
   });
-  const granularity = parseGranularity(params.agrupar);
-  const analytics = await getTicketAnalytics(range, granularity);
+  const analytics = await getTicketAnalytics(range, "day");
 
   return (
     <div className="min-h-screen">
@@ -51,7 +48,6 @@ export default async function InformesPage({
         <ReportsView
           analytics={analytics}
           preset={range.preset}
-          granularity={granularity}
           from={madridDateKey(range.from)}
           to={madridDateKey(range.to)}
         />

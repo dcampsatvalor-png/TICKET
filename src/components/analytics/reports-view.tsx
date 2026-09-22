@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import type { TicketAnalytics } from "@/lib/analytics/service";
-import type { BucketGranularity, PeriodPreset } from "@/lib/analytics/period";
+import type { PeriodPreset } from "@/lib/analytics/period";
 import { LoadingOverlay } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/tickets/status-badge";
@@ -17,21 +17,13 @@ const PRESETS: { value: PeriodPreset; label: string }[] = [
   { value: "custom", label: "Personalizado" },
 ];
 
-const GRANULARITIES: { value: BucketGranularity; label: string }[] = [
-  { value: "day", label: "Día" },
-  { value: "week", label: "Semana" },
-  { value: "month", label: "Mes" },
-];
-
 function buildHref(params: {
   preset: PeriodPreset;
-  granularity: BucketGranularity;
   from?: string;
   to?: string;
 }): string {
   const q = new URLSearchParams();
   q.set("periodo", params.preset);
-  q.set("agrupar", params.granularity);
   if (params.preset === "custom") {
     if (params.from) q.set("desde", params.from);
     if (params.to) q.set("hasta", params.to);
@@ -61,63 +53,14 @@ function Kpi({
   );
 }
 
-function SeriesChart({ series }: { series: TicketAnalytics["series"] }) {
-  const max = Math.max(1, ...series.map((b) => Math.max(b.created, b.resolved)));
-  if (series.length === 0) {
-    return (
-      <p className="py-8 text-center text-sm text-slate-500">
-        No hay datos en este periodo.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-sm bg-teal-600" /> Creadas
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-sm bg-sky-500" /> Resueltas / cerradas
-        </span>
-      </div>
-      <div className="flex items-end gap-1.5 overflow-x-auto pb-1 pt-2 sm:gap-2">
-        {series.map((bucket) => (
-          <div
-            key={bucket.key}
-            className="flex min-w-[2.25rem] flex-1 flex-col items-center gap-1"
-            title={`${bucket.label}: ${bucket.created} creadas, ${bucket.resolved} resueltas`}
-          >
-            <div className="flex h-36 w-full items-end justify-center gap-0.5">
-              <div
-                className="w-2.5 rounded-t bg-teal-600 sm:w-3"
-                style={{ height: `${(bucket.created / max) * 100}%`, minHeight: bucket.created ? 4 : 0 }}
-              />
-              <div
-                className="w-2.5 rounded-t bg-sky-500 sm:w-3"
-                style={{ height: `${(bucket.resolved / max) * 100}%`, minHeight: bucket.resolved ? 4 : 0 }}
-              />
-            </div>
-            <span className="max-w-[3.5rem] truncate text-center text-[10px] leading-tight text-slate-500">
-              {bucket.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function ReportsView({
   analytics,
   preset,
-  granularity,
   from,
   to,
 }: {
   analytics: TicketAnalytics;
   preset: PeriodPreset;
-  granularity: BucketGranularity;
   from: string;
   to: string;
 }) {
@@ -135,71 +78,35 @@ export function ReportsView({
       {pending ? <LoadingOverlay label="Actualizando informes…" /> : null}
 
       <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Periodo
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.value}
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    navigate(
-                      buildHref({
-                        preset: p.value,
-                        granularity,
-                        from,
-                        to,
-                      })
-                    )
-                  }
-                  className={cn(
-                    "rounded-lg border px-3 py-1.5 text-sm transition",
-                    preset === p.value
-                      ? "border-teal-600 bg-teal-600 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                  )}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Agrupar por
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {GRANULARITIES.map((g) => (
-                <button
-                  key={g.value}
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    navigate(
-                      buildHref({
-                        preset,
-                        granularity: g.value,
-                        from,
-                        to,
-                      })
-                    )
-                  }
-                  className={cn(
-                    "rounded-lg border px-3 py-1.5 text-sm transition",
-                    granularity === g.value
-                      ? "border-slate-800 bg-slate-800 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                  )}
-                >
-                  {g.label}
-                </button>
-              ))}
-            </div>
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Periodo
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {PRESETS.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  navigate(
+                    buildHref({
+                      preset: p.value,
+                      from,
+                      to,
+                    })
+                  )
+                }
+                className={cn(
+                  "rounded-lg border px-3 py-1.5 text-sm transition",
+                  preset === p.value
+                    ? "border-teal-600 bg-teal-600 text-white"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -212,7 +119,6 @@ export function ReportsView({
               navigate(
                 buildHref({
                   preset: "custom",
-                  granularity,
                   from: String(fd.get("desde") || from),
                   to: String(fd.get("hasta") || to),
                 })
@@ -270,42 +176,28 @@ export function ReportsView({
         />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-          <div className="mb-4">
-            <h2 className="font-heading text-lg font-semibold text-slate-900">
-              Evolución
-            </h2>
-            <p className="text-sm text-slate-500">
-              Creadas vs resueltas por {granularity === "day" ? "día" : granularity === "week" ? "semana" : "mes"}
-            </p>
-          </div>
-          <SeriesChart series={analytics.series} />
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div className="mb-4">
+          <h2 className="font-heading text-lg font-semibold text-slate-900">
+            Estado actual (creadas)
+          </h2>
+          <p className="text-sm text-slate-500">
+            Cómo están ahora las incidencias del periodo
+          </p>
         </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-          <div className="mb-4">
-            <h2 className="font-heading text-lg font-semibold text-slate-900">
-              Estado actual (creadas)
-            </h2>
-            <p className="text-sm text-slate-500">
-              Cómo están ahora las incidencias del periodo
-            </p>
-          </div>
-          <ul className="space-y-3">
-            {analytics.byStatus.map((row) => (
-              <li
-                key={row.status}
-                className="flex items-center justify-between gap-3"
-              >
-                <StatusBadge status={row.status} />
-                <span className="font-heading text-lg font-semibold tabular-nums text-slate-900">
-                  {row.count}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {analytics.byStatus.map((row) => (
+            <li
+              key={row.status}
+              className="flex items-center justify-between gap-3"
+            >
+              <StatusBadge status={row.status} />
+              <span className="font-heading text-lg font-semibold tabular-nums text-slate-900">
+                {row.count}
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
