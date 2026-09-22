@@ -40,8 +40,8 @@ export default async function InformesPage({
             Informes
           </h1>
           <p className="max-w-2xl text-slate-600">
-            Vista simple de volumen de incidencias, ritmo diario y resolución por
-            agente.
+            Volumen de incidencias creadas en el periodo y cómo están ahora, por
+            estado y por agente.
           </p>
         </div>
 

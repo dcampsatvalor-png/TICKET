@@ -7,7 +7,8 @@ import type { TicketAnalytics } from "@/lib/analytics/service";
 import type { PeriodPreset } from "@/lib/analytics/period";
 import { LoadingOverlay } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { StatusBadge } from "@/components/tickets/status-badge";
+import { STATUS_STYLES } from "@/components/tickets/status-badge";
+import type { TicketStatus } from "@/types/database";
 
 const PRESETS: { value: PeriodPreset; label: string }[] = [
   { value: "today", label: "Hoy" },
@@ -16,6 +17,14 @@ const PRESETS: { value: PeriodPreset; label: string }[] = [
   { value: "month", label: "Este mes" },
   { value: "custom", label: "Personalizado" },
 ];
+
+const STATUS_HREF: Record<TicketStatus, string> = {
+  open: "/tickets?status=open",
+  in_progress: "/tickets?status=in_progress",
+  resolved: "/tickets?status=resolved",
+  closed: "/tickets?status=closed",
+  cancelled: "/tickets?status=cancelled",
+};
 
 function buildHref(params: {
   preset: PeriodPreset;
@@ -36,37 +45,38 @@ function Kpi({
   value,
   hint,
   href,
+  className,
 }: {
   label: string;
   value: string | number;
   hint?: string;
   href?: string;
+  className?: string;
 }) {
   const body = (
     <>
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      <p className="text-xs font-medium uppercase tracking-wide opacity-80">
         {label}
       </p>
-      <p className="mt-1 font-heading text-3xl font-semibold tabular-nums text-slate-900">
+      <p className="mt-1 font-heading text-3xl font-semibold tabular-nums">
         {value}
       </p>
-      {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
+      {hint ? <p className="mt-1 text-xs opacity-70">{hint}</p> : null}
     </>
   );
 
+  const classes = cn(
+    "rounded-xl border px-4 py-4 transition",
+    className ?? "border-slate-200 bg-white text-slate-900",
+    href && "hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40"
+  );
+
   if (!href) {
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white px-4 py-4">
-        {body}
-      </div>
-    );
+    return <div className={classes}>{body}</div>;
   }
 
   return (
-    <Link
-      href={href}
-      className="rounded-xl border border-slate-200 bg-white px-4 py-4 transition hover:border-teal-300 hover:bg-teal-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40"
-    >
+    <Link href={href} className={classes}>
       {body}
     </Link>
   );
@@ -171,36 +181,31 @@ export function ReportsView({
           </form>
         ) : null}
 
-        <p className="text-sm text-slate-600">{analytics.rangeLabel}</p>
+        <p className="text-sm text-slate-600">
+          {analytics.rangeLabel} · estado actual de las incidencias creadas
+        </p>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <Kpi
           label="Creadas"
           value={analytics.totals.created}
-          hint="En el periodo · ver todos"
+          hint="Total en el periodo"
           href="/tickets"
         />
-        <Kpi
-          label="Resueltas"
-          value={analytics.totals.resolved}
-          hint="Resuelto o cerrado"
-          href="/tickets?status=done"
-        />
-        <Kpi
-          label="Anuladas"
-          value={analytics.totals.cancelled}
-          href="/tickets?status=cancelled"
-        />
-        <Kpi
-          label="Aún abiertas"
-          value={analytics.totals.active}
-          hint="Abierto o en proceso"
-          href="/tickets?status=active"
-        />
+        {analytics.byStatus.map((row) => (
+          <Kpi
+            key={row.status}
+            label={row.label}
+            value={row.count}
+            href={STATUS_HREF[row.status]}
+            className={STATUS_STYLES[row.status]}
+          />
+        ))}
         <Kpi
           label="Sin asignar"
           value={analytics.totals.unassignedCreated}
+          hint="De las creadas"
           href="/tickets?assignment=unassigned"
         />
         <Kpi
@@ -211,37 +216,14 @@ export function ReportsView({
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="mb-4">
-          <h2 className="font-heading text-lg font-semibold text-slate-900">
-            Estado actual (creadas)
-          </h2>
-          <p className="text-sm text-slate-500">
-            Cómo están ahora las incidencias del periodo
-          </p>
-        </div>
-        <ul className="flex flex-wrap gap-x-8 gap-y-3">
-          {analytics.byStatus.map((row) => (
-            <li
-              key={row.status}
-              className="flex items-center gap-2"
-            >
-              <StatusBadge status={row.status} />
-              <span className="font-heading text-lg font-semibold tabular-nums text-slate-900">
-                {row.count}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 className="font-heading text-lg font-semibold text-slate-900">
               Por agente
             </h2>
             <p className="text-sm text-slate-500">
-              Asignadas creadas en el periodo, resueltas en el periodo y carga activa
+              De las creadas en el periodo: asignadas, resueltas ahora y aún
+              activas
             </p>
           </div>
           <Link
@@ -259,7 +241,7 @@ export function ReportsView({
                 <th className="pb-2 pr-3 font-medium">Agente</th>
                 <th className="pb-2 pr-3 font-medium tabular-nums">Asignadas</th>
                 <th className="pb-2 pr-3 font-medium tabular-nums">Resueltas</th>
-                <th className="pb-2 font-medium tabular-nums">Activas ahora</th>
+                <th className="pb-2 font-medium tabular-nums">Activas</th>
               </tr>
             </thead>
             <tbody>
@@ -283,11 +265,6 @@ export function ReportsView({
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-xs text-slate-500">
-          «Resueltas» cuenta tickets en estado Resuelto o Cerrado cuya última
-          actualización cae en el periodo (aproximación mientras no haya fecha
-          de resolución dedicada).
-        </p>
       </section>
     </div>
   );
