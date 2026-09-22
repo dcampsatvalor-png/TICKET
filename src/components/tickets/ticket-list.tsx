@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "Todos" },
+  { value: "active", label: "Abiertas" },
   { value: "open", label: "Abierto" },
   { value: "in_progress", label: "En proceso" },
+  { value: "done", label: "Resueltas" },
   { value: "resolved", label: "Resuelto" },
   { value: "closed", label: "Cerrado" },
   { value: "cancelled", label: "Anulado" },

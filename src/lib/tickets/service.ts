@@ -81,7 +81,11 @@ export async function listTickets(filters: {
     .select("*, assignee:profiles!tickets_assigned_to_fkey(*)")
     .order("updated_at", { ascending: false });
 
-  if (filters.status !== "all") {
+  if (filters.status === "active") {
+    query = query.in("status", ["open", "in_progress"]);
+  } else if (filters.status === "done") {
+    query = query.in("status", ["resolved", "closed"]);
+  } else if (filters.status !== "all") {
     query = query.eq("status", filters.status);
   }
   if (filters.assignment === "mine") {

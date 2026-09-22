@@ -8,6 +8,7 @@ import type {
   TicketStatus,
   TicketWithRelations,
 } from "@/types/database";
+import { ticketMatchesStatusFilter } from "@/types/database";
 
 const DEMO_AGENTS: Profile[] = [
   {
@@ -210,7 +211,7 @@ export function listDemoTickets(filters: {
 }): TicketListItem[] {
   const store = getStore();
   return store.tickets
-    .filter((t) => (filters.status === "all" ? true : t.status === filters.status))
+    .filter((t) => ticketMatchesStatusFilter(t.status, filters.status))
     .filter((t) => {
       if (filters.assignment === "mine") return t.assigned_to === filters.currentUserId;
       if (filters.assignment === "unassigned") return t.assigned_to === null;

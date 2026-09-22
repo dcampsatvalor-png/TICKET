@@ -35,13 +35,15 @@ function Kpi({
   label,
   value,
   hint,
+  href,
 }: {
   label: string;
   value: string | number;
   hint?: string;
+  href?: string;
 }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4">
+  const body = (
+    <>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
@@ -49,7 +51,24 @@ function Kpi({
         {value}
       </p>
       {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
-    </div>
+    </>
+  );
+
+  if (!href) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-4">
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className="rounded-xl border border-slate-200 bg-white px-4 py-4 transition hover:border-teal-300 hover:bg-teal-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40"
+    >
+      {body}
+    </Link>
   );
 }
 
@@ -156,19 +175,34 @@ export function ReportsView({
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Creadas" value={analytics.totals.created} hint="En el periodo" />
+        <Kpi
+          label="Creadas"
+          value={analytics.totals.created}
+          hint="En el periodo · ver todos"
+          href="/tickets"
+        />
         <Kpi
           label="Resueltas"
           value={analytics.totals.resolved}
           hint="Resuelto o cerrado"
+          href="/tickets?status=done"
         />
-        <Kpi label="Anuladas" value={analytics.totals.cancelled} />
+        <Kpi
+          label="Anuladas"
+          value={analytics.totals.cancelled}
+          href="/tickets?status=cancelled"
+        />
         <Kpi
           label="Aún abiertas"
           value={analytics.totals.active}
-          hint="De las creadas en el periodo"
+          hint="Abierto o en proceso"
+          href="/tickets?status=active"
         />
-        <Kpi label="Sin asignar" value={analytics.totals.unassignedCreated} />
+        <Kpi
+          label="Sin asignar"
+          value={analytics.totals.unassignedCreated}
+          href="/tickets?assignment=unassigned"
+        />
         <Kpi
           label="Media / día"
           value={analytics.totals.avgPerDay}

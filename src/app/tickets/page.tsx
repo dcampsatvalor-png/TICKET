@@ -12,7 +12,9 @@ function parseStatus(value: string | undefined): StatusFilter {
     value === "in_progress" ||
     value === "resolved" ||
     value === "closed" ||
-    value === "cancelled"
+    value === "cancelled" ||
+    value === "active" ||
+    value === "done"
   ) {
     return value;
   }

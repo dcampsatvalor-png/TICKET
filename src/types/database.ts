@@ -48,7 +48,12 @@ export type TicketListItem = Ticket & {
 };
 
 export type AssignmentFilter = "mine" | "unassigned" | "all";
-export type StatusFilter = TicketStatus | "all";
+/** Single status, all, or composites used by Informes KPIs */
+export type StatusFilter =
+  | TicketStatus
+  | "all"
+  | "active"
+  | "done";
 
 export const STATUS_LABELS: Record<TicketStatus, string> = {
   open: "Abierto",
@@ -57,3 +62,13 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   closed: "Cerrado",
   cancelled: "Anulado",
 };
+
+export function ticketMatchesStatusFilter(
+  status: TicketStatus,
+  filter: StatusFilter
+): boolean {
+  if (filter === "all") return true;
+  if (filter === "active") return status === "open" || status === "in_progress";
+  if (filter === "done") return status === "resolved" || status === "closed";
+  return status === filter;
+}
