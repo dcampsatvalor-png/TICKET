@@ -1,0 +1,15 @@
+---
+description: Obligatorio actualizar DOCUMENTACION.md en cada cambio del sistema de tickets
+alwaysApply: true
+---
+
+# DOCUMENTACION.md — regla obligatoria
+
+En **cualquier** cambio de código, lógica, UI, correo, base de datos o despliegue de este sistema de tickets:
+
+1. Actualizar **`DOCUMENTACION.md`** en la raíz en el **mismo** cambio (mismo commit o inmediatamente junto al código).
+2. Refrescar la fecha de «Última actualización».
+3. Añadir una fila al historial (sección 10) y ajustar las secciones afectadas.
+4. **No esperar** a que el usuario lo pida. Si el cambio toca el producto y no se actualiza `DOCUMENTACION.md`, el trabajo está incompleto.
+
+No aplica solo a cambios triviales que no alteren comportamiento documentable (p. ej. tipografía interna de un comentario de una línea sin efecto). Ante la duda: **actualizar**.
