@@ -1,15 +1,17 @@
 ---
-description: Obligatorio actualizar DOCUMENTACION.md en cada cambio del sistema de tickets
+description: Obligatorio actualizar la documentación de usuario y técnica en cada cambio del sistema de tickets
 alwaysApply: true
 ---
 
-# DOCUMENTACION.md — regla obligatoria
+# Documentación — regla obligatoria
 
 En **cualquier** cambio de código, lógica, UI, correo, base de datos o despliegue de este sistema de tickets:
 
-1. Actualizar **`DOCUMENTACION.md`** en la raíz en el **mismo** cambio (mismo commit o inmediatamente junto al código).
-2. Refrescar la fecha de «Última actualización».
-3. Añadir una fila al historial (sección 10) y ajustar las secciones afectadas.
-4. **No esperar** a que el usuario lo pida. Si el cambio toca el producto y no se actualiza `DOCUMENTACION.md`, el trabajo está incompleto.
+1. Actualizar **`DOCUMENTACION-USUARIO.md`** si cambia algo visible o una regla de negocio (estados, filtros, Informes, correo para el agente, etc.).
+2. Actualizar **`DOCUMENTACION-TECNICA.md`** si cambia implementación, rutas, schema, env, threading, servicios, etc.
+3. Actualizar el índice **`DOCUMENTACION.md`** (fecha + historial breve).
+4. Hacerlo en el **mismo** trabajo que el código. **No esperar** a que el usuario lo pida.
 
-No aplica solo a cambios triviales que no alteren comportamiento documentable (p. ej. tipografía interna de un comentario de una línea sin efecto). Ante la duda: **actualizar**.
+Si el cambio toca el producto y no se actualizan las docs correspondientes, el trabajo está incompleto.
+
+Ante la duda: actualizar usuario **y** técnica.

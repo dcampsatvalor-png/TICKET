@@ -10,8 +10,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- BEGIN:project-agent-rules -->
 
-# DOCUMENTACION.md (obligatorio)
+# Documentación (obligatorio)
 
-Cualquier cambio en este sistema de tickets debe actualizar `DOCUMENTACION.md` en la raíz (fecha, historial y secciones afectadas) en el mismo trabajo, sin que el usuario lo pida. Ver también `.cursor/rules/documentacion.mdc`.
+Cualquier cambio en este sistema de tickets debe actualizar, según corresponda:
+
+- `DOCUMENTACION-USUARIO.md` (uso y reglas de negocio)
+- `DOCUMENTACION-TECNICA.md` (implementación)
+- `DOCUMENTACION.md` (índice + fecha/historial breve)
+
+Sin que el usuario lo pida. Ver `.cursor/rules/documentacion.mdc`.
 
 <!-- END:project-agent-rules -->
