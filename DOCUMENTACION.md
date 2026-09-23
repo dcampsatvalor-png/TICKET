@@ -189,6 +189,7 @@ Ver `.env.local.example`.
 
 | Fecha / commit | Cambio |
 |---|---|
+| 2026-09-23 | Regla fija `.cursor/rules/documentacion.mdc` + bloque en `AGENTS.md` para actualizar docs siempre |
 | 2026-09-23 | Creación de `DOCUMENTACION.md` (este archivo) + política de actualización continua |
 | `23aff6e` | Anuladas no cuentan en KPI/filtro Sin asignar |
 | `c990cf8` | Informes: KPIs = estado actual coloreado; se quita bloque duplicado e histórico |
@@ -209,6 +210,11 @@ Al modificar el sistema de tickets, el agente / desarrollador debe:
 2. Actualizar la fecha de “Última actualización”.
 3. Añadir una fila al historial (sección 10) y ajustar las secciones afectadas (estados, pantallas, correo, BD, etc.).
 4. No esperar a que el usuario lo solicite.
+
+**Regla fija del repo (cumplimiento automático):**
+
+- `.cursor/rules/documentacion.mdc` (`alwaysApply: true`) — Cursor inyecta la regla en cada sesión del agente.
+- `AGENTS.md` (bloque `project-agent-rules`) — refuerzo a nivel de instrucciones del proyecto.
 
 ---
 
