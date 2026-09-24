@@ -4,6 +4,12 @@ import { TicketFilters, TicketList } from "@/components/tickets/ticket-list";
 import { LiveRefresh } from "@/components/live-refresh";
 import { getCurrentProfile, listTickets } from "@/lib/tickets/service";
 import { isDemoMode } from "@/lib/env";
+import {
+  formatRangeLabel,
+  madridDateKey,
+  resolveOptionalDateRange,
+  type PeriodPreset,
+} from "@/lib/analytics/period";
 import type { AssignmentFilter, StatusFilter } from "@/types/database";
 import { Suspense } from "react";
 
@@ -27,10 +33,29 @@ function parseAssignment(value: string | undefined): AssignmentFilter {
   return "all";
 }
 
+function parsePeriodo(value: string | undefined): PeriodPreset | "all" {
+  if (
+    value === "today" ||
+    value === "7d" ||
+    value === "30d" ||
+    value === "month" ||
+    value === "custom"
+  ) {
+    return value;
+  }
+  return "all";
+}
+
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; assignment?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    assignment?: string;
+    periodo?: string;
+    desde?: string;
+    hasta?: string;
+  }>;
 }) {
   const profile = await getCurrentProfile();
   if (!profile && !isDemoMode()) {
@@ -40,7 +65,22 @@ export default async function TicketsPage({
   const params = await searchParams;
   const status = parseStatus(params.status);
   const assignment = parseAssignment(params.assignment);
-  const tickets = await listTickets({ status, assignment });
+  const periodo = parsePeriodo(params.periodo);
+  const range = resolveOptionalDateRange({
+    preset: periodo,
+    from: params.desde,
+    to: params.hasta,
+  });
+  const desde = range ? madridDateKey(range.from) : madridDateKey(new Date());
+  const hasta = range ? madridDateKey(range.to) : madridDateKey(new Date());
+  const rangeLabel = range ? formatRangeLabel(range.from, range.to) : null;
+
+  const tickets = await listTickets({
+    status,
+    assignment,
+    createdFrom: range?.from ?? null,
+    createdTo: range?.to ?? null,
+  });
   const liveRealtime = !isDemoMode();
 
   return (
@@ -61,7 +101,14 @@ export default async function TicketsPage({
 
         <div className="mb-6">
           <Suspense fallback={null}>
-            <TicketFilters status={status} assignment={assignment} />
+            <TicketFilters
+              status={status}
+              assignment={assignment}
+              periodo={periodo}
+              desde={desde}
+              hasta={hasta}
+              rangeLabel={rangeLabel}
+            />
           </Suspense>
         </div>
 

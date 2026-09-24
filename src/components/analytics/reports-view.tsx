@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import type { TicketAnalytics } from "@/lib/analytics/service";
 import type { PeriodPreset } from "@/lib/analytics/period";
+import { buildTicketsHref } from "@/lib/tickets/query";
 import { LoadingOverlay } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { STATUS_STYLES } from "@/components/tickets/status-badge";
@@ -18,15 +19,7 @@ const PRESETS: { value: PeriodPreset; label: string }[] = [
   { value: "custom", label: "Personalizado" },
 ];
 
-const STATUS_HREF: Record<TicketStatus, string> = {
-  open: "/tickets?status=open",
-  in_progress: "/tickets?status=in_progress",
-  resolved: "/tickets?status=resolved",
-  closed: "/tickets?status=closed",
-  cancelled: "/tickets?status=cancelled",
-};
-
-function buildHref(params: {
+function buildInformesHref(params: {
   preset: PeriodPreset;
   from?: string;
   to?: string;
@@ -102,6 +95,19 @@ export function ReportsView({
     });
   }
 
+  function ticketsHref(extra: {
+    status?: TicketStatus | "all";
+    assignment?: "unassigned" | "all";
+  } = {}) {
+    return buildTicketsHref({
+      status: extra.status ?? "all",
+      assignment: extra.assignment ?? "all",
+      periodo: preset,
+      desde: from,
+      hasta: to,
+    });
+  }
+
   return (
     <div className="relative space-y-8">
       {pending ? <LoadingOverlay label="Actualizando informes…" /> : null}
@@ -119,7 +125,7 @@ export function ReportsView({
                 disabled={pending}
                 onClick={() =>
                   navigate(
-                    buildHref({
+                    buildInformesHref({
                       preset: p.value,
                       from,
                       to,
@@ -146,7 +152,7 @@ export function ReportsView({
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
               navigate(
-                buildHref({
+                buildInformesHref({
                   preset: "custom",
                   from: String(fd.get("desde") || from),
                   to: String(fd.get("hasta") || to),
@@ -191,14 +197,14 @@ export function ReportsView({
           label="Creadas"
           value={analytics.totals.created}
           hint="Total en el periodo"
-          href="/tickets"
+          href={ticketsHref()}
         />
         {analytics.byStatus.map((row) => (
           <Kpi
             key={row.status}
             label={row.label}
             value={row.count}
-            href={STATUS_HREF[row.status]}
+            href={ticketsHref({ status: row.status })}
             className={STATUS_STYLES[row.status]}
           />
         ))}
@@ -206,7 +212,7 @@ export function ReportsView({
           label="Sin asignar"
           value={analytics.totals.unassignedCreated}
           hint="De las creadas"
-          href="/tickets?assignment=unassigned"
+          href={ticketsHref({ assignment: "unassigned" })}
         />
         <Kpi
           label="Media / día"
@@ -227,7 +233,7 @@ export function ReportsView({
             </p>
           </div>
           <Link
-            href="/tickets"
+            href={ticketsHref()}
             className="text-sm font-medium text-teal-700 hover:text-teal-800"
           >
             Ir a tickets

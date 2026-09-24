@@ -19,6 +19,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 - Informes muestran el **estado actual** de las creadas en el periodo (no un histórico de cambios de estado).
 - La pantalla **Tickets** (y el detalle) se **actualiza sola**; no hace falta F5.
 - Responder desde el panel **no debe crear otro ticket** (se ignora el eco del correo de `incidencias@`).
+- Periodo de Informes y Tickets **sincronizado** (Hoy, 7 días, etc. al pulsar un KPI).
 
 Detalle para usuarios → [DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)  
 Detalle técnico → [DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)  
@@ -37,6 +38,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-24 | Periodo sincronizado Informes ↔ Tickets |
 | 2026-09-24 | Fix: respuesta del agente ya no abre ticket duplicado |
 | 2026-09-24 | Actualización automática de Tickets (sin F5) |
 | 2026-09-23 | Separación en documentación de **usuario** y **técnica** |

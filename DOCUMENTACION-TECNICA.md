@@ -94,10 +94,12 @@ Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo
 | Ruta | Rol |
 |---|---|
 | `/login` | Auth |
-| `/tickets` | Listado + filtros + **LiveRefresh** |
+| `/tickets` | Listado + filtros (periodo + estado + asignación) + **LiveRefresh** |
 | `/tickets/[id]` | Detalle + **LiveRefresh** |
 | `/informes` | KPIs periodo + tabla agentes |
 | `POST /api/webhooks/resend` | Inbound |
+
+Query compartida periodo↔tickets: `lib/tickets/query.ts` (`buildTicketsHref`). Los KPI de Informes pasan `periodo`/`desde`/`hasta` al listado. `listTickets` filtra por `created_at` cuando hay rango (`resolveOptionalDateRange`).
 
 ### Actualización en vivo (`components/live-refresh.tsx`)
 
@@ -191,6 +193,7 @@ npm run typecheck
 
 | Fecha / commit | Cambio |
 |---|---|
+| 2026-09-24 | Filtro de periodo en Tickets sincronizado con Informes KPI deep-links |
 | 2026-09-24 | Ignorar ecos outbound del helpdesk; `[Ticket #N]` en asunto/cuerpo; Message-ID normalizado |
 | 2026-09-24 | `LiveRefresh`: polling + Realtime opcional en `/tickets` y detalle |
 | 2026-09-23 | Docs partidas: `DOCUMENTACION-USUARIO.md` + `DOCUMENTACION-TECNICA.md`; índice en `DOCUMENTACION.md` |

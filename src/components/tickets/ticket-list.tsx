@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Inbox } from "lucide-react";
 import type { AssignmentFilter, StatusFilter, TicketListItem } from "@/types/database";
+import type { PeriodPreset } from "@/lib/analytics/period";
+import { buildTicketsHref } from "@/lib/tickets/query";
 import { RelativeTime, StatusBadge } from "@/components/tickets/status-badge";
 import { LoadingOverlay } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -21,6 +23,15 @@ const ASSIGNMENT_OPTIONS: { value: AssignmentFilter; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "mine", label: "Mis tickets" },
   { value: "unassigned", label: "Sin asignar" },
+];
+
+const PERIOD_OPTIONS: { value: PeriodPreset | "all"; label: string }[] = [
+  { value: "all", label: "Todo" },
+  { value: "today", label: "Hoy" },
+  { value: "7d", label: "7 días" },
+  { value: "30d", label: "30 días" },
+  { value: "month", label: "Este mes" },
+  { value: "custom", label: "Personalizado" },
 ];
 
 function FilterChip({
@@ -58,20 +69,36 @@ function FilterChip({
 export function TicketFilters({
   status,
   assignment,
+  periodo,
+  desde,
+  hasta,
+  rangeLabel,
 }: {
   status: StatusFilter;
   assignment: AssignmentFilter;
+  periodo: PeriodPreset | "all";
+  desde: string;
+  hasta: string;
+  rangeLabel: string | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const pendingLabel = "Aplicando filtros…";
 
-  function hrefFor(nextStatus: StatusFilter, nextAssignment: AssignmentFilter) {
-    const params = new URLSearchParams();
-    if (nextStatus !== "all") params.set("status", nextStatus);
-    if (nextAssignment !== "all") params.set("assignment", nextAssignment);
-    const q = params.toString();
-    return q ? `/tickets?${q}` : "/tickets";
+  function hrefFor(next: {
+    status?: StatusFilter;
+    assignment?: AssignmentFilter;
+    periodo?: PeriodPreset | "all";
+    desde?: string;
+    hasta?: string;
+  }) {
+    return buildTicketsHref({
+      status: next.status ?? status,
+      assignment: next.assignment ?? assignment,
+      periodo: next.periodo ?? periodo,
+      desde: next.desde ?? desde,
+      hasta: next.hasta ?? hasta,
+    });
   }
 
   function onNavigate(href: string) {
@@ -83,17 +110,17 @@ export function TicketFilters({
   return (
     <>
       {isPending && <LoadingOverlay label={pendingLabel} />}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="space-y-4">
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Estado
+            Periodo
           </p>
           <div className="flex flex-wrap gap-2">
-            {STATUS_OPTIONS.map((opt) => (
+            {PERIOD_OPTIONS.map((opt) => (
               <FilterChip
                 key={opt.value}
-                active={status === opt.value}
-                href={hrefFor(opt.value, assignment)}
+                active={periodo === opt.value}
+                href={hrefFor({ periodo: opt.value })}
                 disabled={isPending}
                 onNavigate={onNavigate}
               >
@@ -101,23 +128,90 @@ export function TicketFilters({
               </FilterChip>
             ))}
           </div>
-        </div>
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Asignación
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {ASSIGNMENT_OPTIONS.map((opt) => (
-              <FilterChip
-                key={opt.value}
-                active={assignment === opt.value}
-                href={hrefFor(status, opt.value)}
-                disabled={isPending}
-                onNavigate={onNavigate}
+          {periodo === "custom" ? (
+            <form
+              className="flex flex-wrap items-end gap-3 pt-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                onNavigate(
+                  hrefFor({
+                    periodo: "custom",
+                    desde: String(fd.get("desde") || desde),
+                    hasta: String(fd.get("hasta") || hasta),
+                  })
+                );
+              }}
+            >
+              <label className="space-y-1 text-sm">
+                <span className="text-xs font-medium text-slate-500">Desde</span>
+                <input
+                  type="date"
+                  name="desde"
+                  defaultValue={desde}
+                  className="block rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                />
+              </label>
+              <label className="space-y-1 text-sm">
+                <span className="text-xs font-medium text-slate-500">Hasta</span>
+                <input
+                  type="date"
+                  name="hasta"
+                  defaultValue={hasta}
+                  className="block rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                className="rounded-lg bg-teal-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700"
               >
-                {opt.label}
-              </FilterChip>
-            ))}
+                Aplicar
+              </button>
+            </form>
+          ) : null}
+          {rangeLabel ? (
+            <p className="text-sm text-slate-500">
+              Creadas entre {rangeLabel}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Estado
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {STATUS_OPTIONS.map((opt) => (
+                <FilterChip
+                  key={opt.value}
+                  active={status === opt.value}
+                  href={hrefFor({ status: opt.value })}
+                  disabled={isPending}
+                  onNavigate={onNavigate}
+                >
+                  {opt.label}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Asignación
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {ASSIGNMENT_OPTIONS.map((opt) => (
+                <FilterChip
+                  key={opt.value}
+                  active={assignment === opt.value}
+                  href={hrefFor({ assignment: opt.value })}
+                  disabled={isPending}
+                  onNavigate={onNavigate}
+                >
+                  {opt.label}
+                </FilterChip>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -141,7 +235,8 @@ export function TicketList({ tickets }: { tickets: TicketListItem[] }) {
         <Inbox className="mb-3 size-8 text-slate-400" />
         <p className="font-medium text-slate-800">No hay tickets con estos filtros</p>
         <p className="mt-1 max-w-sm text-sm text-slate-500">
-          Prueba a cambiar el estado o la asignación, o espera a que lleguen nuevos correos.
+          Prueba a cambiar el periodo, el estado o la asignación, o espera a que
+          lleguen nuevos correos.
         </p>
       </div>
     );

@@ -56,6 +56,12 @@ No hace falta pulsar F5. La lista (y el detalle) se **refrescan solos** cada poc
 - Cada línea es una incidencia (`#número`, asunto, remitente, estado, asignado, fecha).
 - Pulsad una línea para abrir el detalle.
 
+### Filtros de periodo
+
+Mismos que en Informes: **Todo**, **Hoy**, **7 días**, **30 días**, **Este mes**, **Personalizado**.
+
+Filtran por fecha de **creación** del ticket. Si entráis desde Informes pulsando un cuadrado (p. ej. Anulado + Hoy), llegáis a Tickets **con el mismo periodo y estado** ya aplicados.
+
 ### Filtros de estado
 
 | Filtro | Significado |
@@ -167,6 +173,7 @@ Si hay 5 anuladas sin agente:
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-24 | Periodo (Hoy/7d/…) también en Tickets; sincronizado con Informes al pulsar los KPIs |
 | 2026-09-24 | Al responder desde el panel **ya no se crea un ticket duplicado** (se ignora el eco del correo de soporte) |
 | 2026-09-24 | Tickets e detalle se actualizan solos (sin F5) |
 | 2026-09-23 | Documentación de usuario separada de la técnica |

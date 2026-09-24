@@ -208,6 +208,8 @@ export function listDemoTickets(filters: {
   status: StatusFilter;
   assignment: AssignmentFilter;
   currentUserId: string;
+  createdFrom?: Date | null;
+  createdTo?: Date | null;
 }): TicketListItem[] {
   const store = getStore();
   return store.tickets
@@ -217,6 +219,12 @@ export function listDemoTickets(filters: {
       if (filters.assignment === "unassigned") {
         return t.assigned_to === null && t.status !== "cancelled";
       }
+      return true;
+    })
+    .filter((t) => {
+      const created = new Date(t.created_at).getTime();
+      if (filters.createdFrom && created < filters.createdFrom.getTime()) return false;
+      if (filters.createdTo && created > filters.createdTo.getTime()) return false;
       return true;
     })
     .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))

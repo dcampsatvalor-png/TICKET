@@ -162,3 +162,26 @@ export function formatRangeLabel(from: Date, to: Date): string {
   });
   return `${fmt.format(from)} – ${fmt.format(to)}`;
 }
+
+/** Tickets page: no periodo / "all" → no date filter. Informes keeps defaulting to 30d. */
+export function resolveOptionalDateRange(input: {
+  preset?: string;
+  from?: string;
+  to?: string;
+}): DateRange | null {
+  if (!input.preset || input.preset === "all") return null;
+  return resolveDateRange(input);
+}
+
+export function appendPeriodSearchParams(
+  params: URLSearchParams,
+  input: { preset: PeriodPreset | "all"; from?: string; to?: string }
+): void {
+  if (input.preset === "all") return;
+  params.set("periodo", input.preset);
+  if (input.preset === "custom") {
+    if (input.from) params.set("desde", input.from);
+    if (input.to) params.set("hasta", input.to);
+  }
+}
+

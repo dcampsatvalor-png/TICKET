@@ -66,6 +66,8 @@ export async function listAgents(): Promise<Profile[]> {
 export async function listTickets(filters: {
   status: StatusFilter;
   assignment: AssignmentFilter;
+  createdFrom?: Date | null;
+  createdTo?: Date | null;
 }): Promise<TicketListItem[]> {
   const profile = await getCurrentProfile();
   if (!profile) return [];
@@ -94,6 +96,12 @@ export async function listTickets(filters: {
     query = query.eq("assigned_to", profile.id);
   } else if (filters.assignment === "unassigned") {
     query = query.is("assigned_to", null).neq("status", "cancelled");
+  }
+  if (filters.createdFrom) {
+    query = query.gte("created_at", filters.createdFrom.toISOString());
+  }
+  if (filters.createdTo) {
+    query = query.lte("created_at", filters.createdTo.toISOString());
   }
 
   const { data, error } = await query;
