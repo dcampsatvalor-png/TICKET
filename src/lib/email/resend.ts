@@ -41,7 +41,9 @@ export async function sendTicketReplyEmail(input: {
   const topic =
     (input.threadTopic?.trim() || bareConversationSubject(input.subject)) ||
     input.subject;
-  const taggedSubject = `Re: ${topic}`;
+  // Keep Thread-Topic clean for Outlook; include [Ticket #N] in subject so
+  // inbound echoes / client replies can always reattach to the same ticket.
+  const taggedSubject = `Re: ${topic} [Ticket #${input.ticketNumber}]`;
 
   const outboundThreadIndex = input.threadIndex
     ? extendThreadIndex(input.threadIndex) ?? undefined

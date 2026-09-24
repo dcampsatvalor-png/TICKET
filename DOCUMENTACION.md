@@ -18,6 +18,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 - **Las incidencias Anuladas no cuentan como “Sin asignar”** (ni en Informes ni en el filtro de tickets), aunque no tengan agente.
 - Informes muestran el **estado actual** de las creadas en el periodo (no un histórico de cambios de estado).
 - La pantalla **Tickets** (y el detalle) se **actualiza sola**; no hace falta F5.
+- Responder desde el panel **no debe crear otro ticket** (se ignora el eco del correo de `incidencias@`).
 
 Detalle para usuarios → [DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)  
 Detalle técnico → [DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)  
@@ -36,6 +37,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-24 | Fix: respuesta del agente ya no abre ticket duplicado |
 | 2026-09-24 | Actualización automática de Tickets (sin F5) |
 | 2026-09-23 | Separación en documentación de **usuario** y **técnica** |
 | 2026-09-23 | Alta de docs + regla alwaysApply |

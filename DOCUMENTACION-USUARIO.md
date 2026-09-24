@@ -151,12 +151,13 @@ Si hay 5 anuladas sin agente:
 
 ---
 
-## 9. Problemas frecuentes (usuario)
+### Problemas frecuentes (usuario)
 
 | Situación | Qué hacer |
 |---|---|
 | No llega el ticket tras escribir a incidencias@ | Avisar a quien gestione Outlook/Resend; puede fallar la copia al sistema |
 | La respuesta del agente sale como correo “nuevo” en Outlook | Tema de hilos de correo; avisar a quien mantenga el sistema |
+| Al responder desde el panel aparecía otro ticket | Corregido: el sistema ignora el eco del correo enviado desde `incidencias@` |
 | No veo un ticket anulado en Sin asignar | Es normal: las anuladas no cuentan ahí |
 | No puedo iniciar sesión | Pedir reset de contraseña / alta de usuario agente |
 
@@ -166,6 +167,7 @@ Si hay 5 anuladas sin agente:
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-24 | Al responder desde el panel **ya no se crea un ticket duplicado** (se ignora el eco del correo de soporte) |
 | 2026-09-24 | Tickets e detalle se actualizan solos (sin F5) |
 | 2026-09-23 | Documentación de usuario separada de la técnica |
 | 2026-09-23 | Anuladas dejan de contar en Sin asignar |

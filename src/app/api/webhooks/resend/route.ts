@@ -6,6 +6,7 @@ import {
   resolveOriginalMessageId,
   resolveThreadHeaders,
 } from "@/lib/email/headers";
+import { isHelpdeskSystemAddress } from "@/lib/email/system-addresses";
 import { isDemoMode } from "@/lib/env";
 import { ingestInboundEmail } from "@/lib/tickets/service";
 
@@ -204,6 +205,16 @@ export async function POST(req: Request) {
   }
 
   const { email, name } = parseAddress(fromRaw);
+
+  // Agent replies are sent From incidencias@…; Outlook may copy them back into
+  // Resend. That echo must not open a second ticket (comment already saved).
+  if (isHelpdeskSystemAddress(email)) {
+    return NextResponse.json({
+      ok: true,
+      ignored: "helpdesk_outbound_echo",
+      from: email,
+    });
+  }
 
   const result = await ingestInboundEmail({
     subject,

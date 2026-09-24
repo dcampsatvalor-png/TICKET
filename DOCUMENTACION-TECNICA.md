@@ -130,18 +130,26 @@ Tenant M365 puede bloquear forward externo (`550 5.7.520`).
 
 ### Threading outbound (`lib/email/resend.ts`)
 
-- Subject: `Re: {topic}` (sin `[Ticket #N]`; nº en pie).
+- Subject: `Re: {topic} [Ticket #N]` (`Thread-Topic` sigue limpio sin el tag).
 - Headers: `In-Reply-To`, `References`, `Thread-Topic`, `Thread-Index` vía `extendThreadIndex`.
+- Pie del cuerpo: `Ticket #N` (fallback de matching).
 - `RESEND_REPLY_TO` opcional; no usar inbound Resend como Reply-To por defecto.
+
+### Eco de respuestas del agente (importante)
+
+La regla de Outlook puede copiar a Resend también el correo **saliente** desde `incidencias@…`. Ese eco **no** debe crear ticket: el comentario ya se guardó en `replyAction`.
+
+- `lib/email/system-addresses.ts` + webhook: si `From` es dirección del helpdesk → `{ ignored: "helpdesk_outbound_echo" }`.
+- Lista: `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `HELP_DESK_IGNORE_FROM`, más `incidencias@` / `soporte@` / inbound Resend.
 
 ### Threading inbound (`ingestInboundEmail`)
 
-1. `[Ticket #N]` en asunto  
-2. Message-ID match (`In-Reply-To` / `References`)  
-3. Mismo sender + subject normalizado + open/in_progress  
+1. `[Ticket #N]` / `Ticket #N` en asunto **o cuerpo**
+2. Message-ID match normalizado (`In-Reply-To` / `References`)
+3. Mismo sender + subject normalizado + open/in_progress
 4. Else → ticket nuevo
 
-Archivos: `email/resend.ts`, `thread-index.ts`, `threading.ts`, `headers.ts`, `api/webhooks/resend/route.ts`.
+Archivos: `email/resend.ts`, `thread-index.ts`, `threading.ts`, `headers.ts`, `system-addresses.ts`, `api/webhooks/resend/route.ts`.
 
 Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `RESEND_WEBHOOK_SECRET`.
 
@@ -183,6 +191,7 @@ npm run typecheck
 
 | Fecha / commit | Cambio |
 |---|---|
+| 2026-09-24 | Ignorar ecos outbound del helpdesk; `[Ticket #N]` en asunto/cuerpo; Message-ID normalizado |
 | 2026-09-24 | `LiveRefresh`: polling + Realtime opcional en `/tickets` y detalle |
 | 2026-09-23 | Docs partidas: `DOCUMENTACION-USUARIO.md` + `DOCUMENTACION-TECNICA.md`; índice en `DOCUMENTACION.md` |
 | 2026-09-23 | Regla `.cursor/rules/documentacion.mdc` + `AGENTS.md` |
