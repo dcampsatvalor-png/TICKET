@@ -151,7 +151,7 @@ Si hay 5 anuladas sin agente:
 
 ---
 
-### Problemas frecuentes (usuario)
+## 9. Problemas frecuentes (usuario)
 
 | Situación | Qué hacer |
 |---|---|
