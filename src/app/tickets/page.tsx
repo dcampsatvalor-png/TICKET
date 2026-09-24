@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import { TicketFilters, TicketList } from "@/components/tickets/ticket-list";
+import { LiveRefresh } from "@/components/live-refresh";
 import { getCurrentProfile, listTickets } from "@/lib/tickets/service";
 import { isDemoMode } from "@/lib/env";
 import type { AssignmentFilter, StatusFilter } from "@/types/database";
@@ -40,18 +41,22 @@ export default async function TicketsPage({
   const status = parseStatus(params.status);
   const assignment = parseAssignment(params.assignment);
   const tickets = await listTickets({ status, assignment });
+  const liveRealtime = !isDemoMode();
 
   return (
     <div className="min-h-screen">
       <AppHeader profile={profile} />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-8 space-y-2">
-          <h1 className="font-heading text-3xl font-semibold tracking-tight text-slate-900">
-            Tickets
-          </h1>
-          <p className="max-w-xl text-slate-600">
-            Gestiona incidencias entrantes por correo y responde desde el panel.
-          </p>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+          <div className="space-y-2">
+            <h1 className="font-heading text-3xl font-semibold tracking-tight text-slate-900">
+              Tickets
+            </h1>
+            <p className="max-w-xl text-slate-600">
+              Gestiona incidencias entrantes por correo y responde desde el panel.
+            </p>
+          </div>
+          <LiveRefresh realtime={liveRealtime} />
         </div>
 
         <div className="mb-6">

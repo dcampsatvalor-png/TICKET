@@ -2,7 +2,7 @@
 
 Referencia para desarrollo, despliegue y mantenimiento del código.
 
-Última actualización: 2026-09-23
+Última actualización: 2026-09-24
 
 Índice: [DOCUMENTACION.md](./DOCUMENTACION.md) · Usuario: [DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)
 
@@ -36,6 +36,7 @@ src/
     api/webhooks/resend/   # inbound
     actions/               # auth, tickets
   components/
+    live-refresh.tsx       # auto refresh listado/detalle
     analytics/reports-view.tsx
     tickets/               # list, detail, status-badge
     layout/app-header.tsx
@@ -93,10 +94,16 @@ Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo
 | Ruta | Rol |
 |---|---|
 | `/login` | Auth |
-| `/tickets` | Listado + filtros |
-| `/tickets/[id]` | Detalle, estado, assignee, reply / note |
+| `/tickets` | Listado + filtros + **LiveRefresh** |
+| `/tickets/[id]` | Detalle + **LiveRefresh** |
 | `/informes` | KPIs periodo + tabla agentes |
 | `POST /api/webhooks/resend` | Inbound |
+
+### Actualización en vivo (`components/live-refresh.tsx`)
+
+- Polling: `router.refresh()` cada ~8 s si la pestaña está visible (+ al volver a ella).
+- Opcional: Supabase Realtime en tablas `tickets` y `ticket_comments` cuando no es demo.
+- Para que Realtime funcione en el proyecto Supabase: Database → Replication / Publication `supabase_realtime` debe incluir esas tablas (si no, el polling sigue bastando).
 
 Informes (`lib/analytics`):
 
@@ -176,6 +183,7 @@ npm run typecheck
 
 | Fecha / commit | Cambio |
 |---|---|
+| 2026-09-24 | `LiveRefresh`: polling + Realtime opcional en `/tickets` y detalle |
 | 2026-09-23 | Docs partidas: `DOCUMENTACION-USUARIO.md` + `DOCUMENTACION-TECNICA.md`; índice en `DOCUMENTACION.md` |
 | 2026-09-23 | Regla `.cursor/rules/documentacion.mdc` + `AGENTS.md` |
 | `23aff6e` | Unassigned excluye `cancelled` (KPI + query + demo) |

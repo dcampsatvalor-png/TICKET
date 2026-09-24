@@ -7,7 +7,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 | **[DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)** | Agentes IT y uso diario del panel (estados, filtros, Informes, reglas de negocio en lenguaje claro) |
 | **[DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)** | Desarrollo, arquitectura, correo, BD, variables, historial de commits |
 
-Última actualización: 2026-09-23
+Última actualización: 2026-09-24
 
 ---
 
@@ -17,6 +17,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 - Estados: Abierto, En proceso, Resuelto, Cerrado, **Anulado**.
 - **Las incidencias Anuladas no cuentan como “Sin asignar”** (ni en Informes ni en el filtro de tickets), aunque no tengan agente.
 - Informes muestran el **estado actual** de las creadas en el periodo (no un histórico de cambios de estado).
+- La pantalla **Tickets** (y el detalle) se **actualiza sola**; no hace falta F5.
 
 Detalle para usuarios → [DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)  
 Detalle técnico → [DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)  
@@ -35,6 +36,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-24 | Actualización automática de Tickets (sin F5) |
 | 2026-09-23 | Separación en documentación de **usuario** y **técnica** |
 | 2026-09-23 | Alta de docs + regla alwaysApply |
 | 2026-09-23 | Anuladas excluidas de Sin asignar |

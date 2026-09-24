@@ -3,7 +3,7 @@
 Guía para agentes IT y responsables que usan el panel.  
 Sin jerga de programación.
 
-Última actualización: 2026-09-23
+Última actualización: 2026-09-24
 
 Índice general: [DOCUMENTACION.md](./DOCUMENTACION.md) · Técnica: [DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)
 
@@ -46,6 +46,10 @@ Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 ---
 
 ## 4. Pantalla Tickets
+
+### Actualización automática
+
+No hace falta pulsar F5. La lista (y el detalle) se **refrescan solos** cada pocos segundos mientras tenéis la pestaña abierta. Veréis el indicador «Actualización automática» junto al título. Si llega un correo nuevo, debería aparecer sin recargar a mano.
 
 ### Listado
 
@@ -162,6 +166,7 @@ Si hay 5 anuladas sin agente:
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-24 | Tickets e detalle se actualizan solos (sin F5) |
 | 2026-09-23 | Documentación de usuario separada de la técnica |
 | 2026-09-23 | Anuladas dejan de contar en Sin asignar |
 | 2026-09-22 | Informes con KPIs de estado actual y colores; paneles clicables |
