@@ -55,6 +55,27 @@ export function classifyInboundMailbox(recipients: string[]): InboundMailbox {
   return "support";
 }
 
+/**
+ * Only these senders may create/append development requests via desarrollos@.
+ * Override with RESEND_DEVELOPMENT_ALLOWED_FROM (comma-separated).
+ */
+export function developmentAllowedSenders(): Set<string> {
+  const set = new Set<string>();
+  const raw =
+    process.env.RESEND_DEVELOPMENT_ALLOWED_FROM ||
+    process.env.DEVELOPMENT_ALLOWED_FROM ||
+    "dcamps@grupoatvalor.com,d.camps@tasacioneshipotecarias.com";
+  for (const part of raw.split(/[,;]/)) {
+    const e = parseEmail(part);
+    if (e.includes("@")) set.add(e);
+  }
+  return set;
+}
+
+export function isAllowedDevelopmentSender(email: string): boolean {
+  return developmentAllowedSenders().has(email.trim().toLowerCase());
+}
+
 /** Collect every address that might indicate which mailbox the user wrote to. */
 export function collectInboundRecipients(input: {
   to?: string | string[] | null;

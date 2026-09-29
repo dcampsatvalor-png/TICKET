@@ -11,6 +11,7 @@ import { isDemoMode } from "@/lib/env";
 import {
   classifyInboundMailbox,
   collectInboundRecipients,
+  isAllowedDevelopmentSender,
 } from "@/lib/email/mailbox-routing";
 import { ingestDevelopmentInboundEmail } from "@/lib/developments/service";
 import { ingestInboundEmail } from "@/lib/tickets/service";
@@ -249,6 +250,16 @@ export async function POST(req: Request) {
   };
 
   if (mailbox === "development") {
+    // Desarrollos: only allowlisted senders reach the app (ignore everyone else).
+    if (!isAllowedDevelopmentSender(email)) {
+      return NextResponse.json({
+        ok: true,
+        mailbox: "development",
+        ignored: "development_sender_not_allowed",
+        from: email,
+      });
+    }
+
     const result = await ingestDevelopmentInboundEmail(ingestInput);
     return NextResponse.json({
       ok: true,
