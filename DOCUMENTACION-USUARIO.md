@@ -163,7 +163,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 
 ### Uso del panel
 
-- Listado con filtros por **estado** (mismos estados: Abierto, En proceso, Resuelto, Cerrado, Anulado).
+- Listado con filtros por **periodo** y **estado** (mismos estados: Abierto, En progreso, Resuelto, Cerrado, Anulado).
 - Detalle con cronología, asignación, notas internas y **respuesta pública** al solicitante.
 - Las respuestas salen desde **desarrollos@…** con `[Desarrollo #N]` en el asunto para mantener el hilo.
 - **Actualización automática** igual que en Incidencias.
