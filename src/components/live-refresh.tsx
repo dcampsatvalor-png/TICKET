@@ -16,11 +16,13 @@ export function LiveRefresh({
   intervalMs = DEFAULT_INTERVAL_MS,
   realtime = false,
   showIndicator = true,
+  extraTables = [],
 }: {
   intervalMs?: number;
   /** Subscribe to Postgres changes (requires Realtime enabled on the tables). */
   realtime?: boolean;
   showIndicator?: boolean;
+  extraTables?: string[];
 }) {
   const router = useRouter();
   const lastRefreshAt = useRef(0);
@@ -65,24 +67,21 @@ export function LiveRefresh({
       router.refresh();
     }
 
-    const channel = supabase
-      .channel("helpdesk-live")
-      .on(
+    const channel = supabase.channel("helpdesk-live");
+    const tables = ["tickets", "ticket_comments", ...extraTables];
+    for (const table of tables) {
+      channel.on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "tickets" },
+        { event: "*", schema: "public", table },
         refreshSoon
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "ticket_comments" },
-        refreshSoon
-      )
-      .subscribe();
+      );
+    }
+    channel.subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [realtime, router]);
+  }, [realtime, router, extraTables]);
 
   if (!showIndicator) return null;
 

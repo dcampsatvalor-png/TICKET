@@ -25,7 +25,7 @@ URL de producción (orientativa): `https://ticket-yuwb.vercel.app`
 
 1. Abrir la URL del panel.
 2. Ir a **Login** con el usuario y contraseña que os hayan creado (cuenta de agente).
-3. Tras entrar veréis el menú: **Tickets** | **Informes**.
+3. Tras entrar veréis el menú: **Tickets** | **Informes** | **Desarrollos**.
 
 Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 
@@ -146,7 +146,36 @@ Si hay 5 anuladas sin agente:
 
 ---
 
-## 8. Flujo recomendado del día a día
+## 8. Pantalla Desarrollos
+
+Espacio **independiente** de las incidencias de soporte IT.
+
+### Cómo llegan las peticiones
+
+1. Alguien envía un correo a **`desarrollos@tasacioneshipotecarias.com`** (no a incidencias@).
+2. El sistema crea una petición **D#número** (Abierta) o añade el mensaje al mismo hilo si es una respuesta.
+3. Las gestionáis en **Desarrollos** del menú.
+
+En Outlook debe existir una regla similar a la de incidencias (copia al inbound de Resend) para ese buzón. Si el correo solo llega a Resend sin conservar el destinatario original, puede acabar en Tickets; el administrador debe asegurar que en los encabezados figure `desarrollos@…`.
+
+### Uso del panel
+
+- Listado con filtros por **estado** (mismos estados que tickets: Abierto, En proceso, Resuelto, Cerrado, Anulado).
+- Detalle con cronología, asignación, notas internas y **respuesta pública** al solicitante.
+- Las respuestas salen desde **desarrollos@…** con `[Desarrollo #N]` en el asunto para mantener el hilo.
+- **Actualización automática** igual que en Tickets.
+
+### Diferencia con Tickets
+
+| | Tickets (IT) | Desarrollos |
+|---|---|---|
+| Buzón | incidencias@grupoatvalor.com | desarrollos@tasacioneshipotecarias.com |
+| Numeración | #1001… | D#2001… |
+| Informes BI | Sí (incidencias) | No (solo esta pantalla) |
+
+---
+
+## 9. Flujo recomendado del día a día
 
 1. Abrir **Tickets** → filtro **Sin asignar** (o **Abierto**).
 2. Asignaros la incidencia y pasar a **En proceso**.
@@ -154,10 +183,11 @@ Si hay 5 anuladas sin agente:
 4. Al terminar → **Resuelto** (y más adelante **Cerrado** si aplica).
 5. Si no procede → **Anulado** (no quedará engordando “sin asignar”).
 6. Revisar **Informes** semanalmente (7 días / este mes) para carga por persona.
+7. Peticiones de producto / nuevas funcionalidades → buzón **desarrollos@** y pantalla **Desarrollos**.
 
 ---
 
-## 9. Problemas frecuentes (usuario)
+## 10. Problemas frecuentes (usuario)
 
 | Situación | Qué hacer |
 |---|---|
@@ -166,13 +196,15 @@ Si hay 5 anuladas sin agente:
 | Al responder desde el panel aparecía otro ticket | Corregido: el sistema ignora el eco del correo enviado desde `incidencias@` |
 | No veo un ticket anulado en Sin asignar | Es normal: las anuladas no cuentan ahí |
 | No puedo iniciar sesión | Pedir reset de contraseña / alta de usuario agente |
+| Mi petición de desarrollo no aparece | Comprobar que el correo fue a **desarrollos@** (no incidencias@) y que Outlook reenvía/copia a Resend |
 
 ---
 
-## 10. Historial de cambios (vista usuario)
+## 11. Historial de cambios (vista usuario)
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-29 | Nueva pantalla **Desarrollos** para peticiones a desarrollos@tasacioneshipotecarias.com |
 | 2026-09-24 | Periodo (Hoy/7d/…) también en Tickets; sincronizado con Informes al pulsar los KPIs |
 | 2026-09-24 | Al responder desde el panel **ya no se crea un ticket duplicado** (se ignora el eco del correo de soporte) |
 | 2026-09-24 | Tickets e detalle se actualizan solos (sin F5) |

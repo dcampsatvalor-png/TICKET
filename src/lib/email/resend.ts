@@ -114,3 +114,99 @@ export async function sendTicketReplyEmail(input: {
     threadIndex: outboundThreadIndex,
   };
 }
+
+export async function sendDevelopmentReplyEmail(input: {
+  to: string;
+  requestNumber: number;
+  subject: string;
+  body: string;
+  agentName: string;
+  inReplyTo?: string | null;
+  references?: string | null;
+  threadIndex?: string | null;
+  threadTopic?: string | null;
+}): Promise<{
+  ok: boolean;
+  id?: string;
+  messageId?: string;
+  threadIndex?: string;
+  mocked?: boolean;
+  error?: string;
+}> {
+  const topic =
+    (input.threadTopic?.trim() || bareConversationSubject(input.subject)) ||
+    input.subject;
+  const taggedSubject = `Re: ${topic} [Desarrollo #${input.requestNumber}]`;
+
+  const outboundThreadIndex = input.threadIndex
+    ? extendThreadIndex(input.threadIndex) ?? undefined
+    : undefined;
+
+  const from =
+    process.env.RESEND_DEVELOPMENT_FROM_EMAIL ||
+    process.env.RESEND_FROM_EMAIL ||
+    "desarrollos@tasacioneshipotecarias.com";
+  const replyTo =
+    process.env.RESEND_DEVELOPMENT_REPLY_TO ||
+    process.env.RESEND_DEVELOPMENT_INBOUND_EMAIL ||
+    "desarrollos@tasacioneshipotecarias.com";
+
+  if (!hasResendConfigured()) {
+    console.info("[demo/email] Would send development reply via Resend", {
+      to: input.to,
+      subject: taggedSubject,
+      from,
+      preview: input.body.slice(0, 120),
+    });
+    return {
+      ok: true,
+      mocked: true,
+      id: `demo-dev-email-${Date.now()}`,
+      messageId: `<demo-dev-${Date.now()}@local>`,
+      threadIndex: outboundThreadIndex,
+    };
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const headers: Record<string, string> = {
+    "Thread-Topic": topic,
+  };
+  if (input.inReplyTo) {
+    headers["In-Reply-To"] = input.inReplyTo;
+    headers.References = appendReference(input.references, input.inReplyTo);
+  }
+  if (outboundThreadIndex) {
+    headers["Thread-Index"] = outboundThreadIndex;
+  }
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to: input.to,
+    replyTo,
+    subject: taggedSubject,
+    text: `${input.body}\n\n— ${input.agentName}\nNuevos desarrollos · Desarrollo #${input.requestNumber}`,
+    headers,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  let messageId: string | undefined;
+  if (data?.id) {
+    try {
+      const { data: sent } = await resend.emails.get(data.id);
+      messageId = sent?.message_id ?? undefined;
+    } catch {
+      // non-fatal
+    }
+  }
+
+  return {
+    ok: true,
+    id: data?.id,
+    messageId,
+    threadIndex: outboundThreadIndex,
+  };
+}

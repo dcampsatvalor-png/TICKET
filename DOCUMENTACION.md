@@ -7,13 +7,14 @@ Documentación viva del helpdesk. Hay **dos guías**:
 | **[DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)** | Agentes IT y uso diario del panel (estados, filtros, Informes, reglas de negocio en lenguaje claro) |
 | **[DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)** | Desarrollo, arquitectura, correo, BD, variables, historial de commits |
 
-Última actualización: 2026-09-24
+Última actualización: 2026-09-29
 
 ---
 
 ## Reglas de negocio destacadas (resumen)
 
 - Buzón de entrada de usuarios: **`incidencias@grupoatvalor.com`**.
+- Buzón de **nuevos desarrollos**: **`desarrollos@tasacioneshipotecarias.com`** → pantalla **Desarrollos** (no mezcla con incidencias IT).
 - Estados: Abierto, En proceso, Resuelto, Cerrado, **Anulado**.
 - **Las incidencias Anuladas no cuentan como “Sin asignar”** (ni en Informes ni en el filtro de tickets), aunque no tengan agente.
 - Informes muestran el **estado actual** de las creadas en el periodo (no un histórico de cambios de estado).
@@ -38,6 +39,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-29 | Nueva sección **Desarrollos** + enrutamiento inbound por buzón |
 | 2026-09-24 | Periodo sincronizado Informes ↔ Tickets |
 | 2026-09-24 | Fix: respuesta del agente ya no abre ticket duplicado |
 | 2026-09-24 | Actualización automática de Tickets (sin F5) |

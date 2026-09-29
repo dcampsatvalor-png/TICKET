@@ -17,6 +17,9 @@ export function helpdeskSystemAddresses(): Set<string> {
     process.env.RESEND_FROM_EMAIL,
     process.env.RESEND_REPLY_TO,
     process.env.RESEND_INBOUND_EMAIL,
+    process.env.RESEND_DEVELOPMENT_FROM_EMAIL,
+    process.env.RESEND_DEVELOPMENT_REPLY_TO,
+    process.env.RESEND_DEVELOPMENT_INBOUND_EMAIL,
     process.env.HELP_DESK_IGNORE_FROM,
   ];
   for (const raw of fromEnv) {
@@ -29,6 +32,7 @@ export function helpdeskSystemAddresses(): Set<string> {
   // Known production mailboxes for this deployment
   set.add("incidencias@grupoatvalor.com");
   set.add("soporte@grupoatvalor.com");
+  set.add("desarrollos@tasacioneshipotecarias.com");
   set.add("tickets@pelioluu.resend.app");
   return set;
 }

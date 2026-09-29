@@ -32,19 +32,23 @@ src/
   app/
     login/
     tickets/               # listado + [id]
+    desarrollos/           # peticiones de nuevo desarrollo
     informes/              # BI
-    api/webhooks/resend/   # inbound
-    actions/               # auth, tickets
+    api/webhooks/resend/   # inbound (soporte + desarrollos)
+    actions/               # auth, tickets, desarrollos
   components/
     live-refresh.tsx       # auto refresh listado/detalle
     analytics/reports-view.tsx
     tickets/               # list, detail, status-badge
+    developments/          # list, detail (desarrollos)
     layout/app-header.tsx
   lib/
     analytics/             # period.ts, service.ts
     tickets/service.ts
-    email/                 # resend, threading, thread-index, headers
+    developments/service.ts
+    email/                 # resend, threading, mailbox-routing, system-addresses
     demo/store.ts
+    demo/developments-store.ts
     supabase/
   types/database.ts
   proxy.ts                 # session gate
@@ -68,6 +72,21 @@ Migraciones:
 | `002_email_threading.sql` | `last_email_message_id`, `email_references` |
 | `003_outlook_thread_headers.sql` | `email_thread_index`, `email_thread_topic` |
 | `004_cancelled_status.sql` | `cancelled` en enum |
+| `005_development_requests.sql` | `development_requests`, `development_request_comments` |
+
+### Desarrollos (tablas separadas)
+
+- `development_requests` — misma semántica de estados que tickets; numeración `request_number` desde **2001** (`D#2001` en UI).
+- `development_request_comments` — cronología (cliente / agente / interna).
+- Columnas de hilo de correo igual que tickets (`last_email_message_id`, etc.).
+
+Inbound: si el destinatario detectado incluye `desarrollos@tasacioneshipotecarias.com` (env `RESEND_DEVELOPMENT_INBOUND_EMAIL`), el webhook usa `ingestDevelopmentInboundEmail` en lugar de tickets.
+
+Outbound: `sendDevelopmentReplyEmail` (`RESEND_DEVELOPMENT_FROM_EMAIL`, Reply-To desarrollos@).
+
+Routing: `lib/email/mailbox-routing.ts` (`collectInboundRecipients`, `classifyInboundMailbox`).
+
+Tag de hilo en asunto: `[Desarrollo #N]` — `lib/email/development-threading.ts`.
 
 ### `StatusFilter`
 
@@ -97,14 +116,16 @@ Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo
 | `/tickets` | Listado + filtros (periodo + estado + asignación) + **LiveRefresh** |
 | `/tickets/[id]` | Detalle + **LiveRefresh** |
 | `/informes` | KPIs periodo + tabla agentes |
-| `POST /api/webhooks/resend` | Inbound |
+| `/desarrollos` | Listado peticiones desarrollo + **LiveRefresh** |
+| `/desarrollos/[id]` | Detalle + **LiveRefresh** |
+| `POST /api/webhooks/resend` | Inbound (JSON incluye `mailbox`: `support` \| `development`) |
 
 Query compartida periodo↔tickets: `lib/tickets/query.ts` (`buildTicketsHref`). Los KPI de Informes pasan `periodo`/`desde`/`hasta` al listado. `listTickets` filtra por `created_at` cuando hay rango (`resolveOptionalDateRange`).
 
 ### Actualización en vivo (`components/live-refresh.tsx`)
 
 - Polling: `router.refresh()` cada ~8 s si la pestaña está visible (+ al volver a ella).
-- Opcional: Supabase Realtime en tablas `tickets` y `ticket_comments` cuando no es demo.
+- Opcional: Supabase Realtime en tablas `tickets`, `ticket_comments` y, en Desarrollos, `development_requests` / `development_request_comments` (`extraTables` en `LiveRefresh`).
 - Para que Realtime funcione en el proyecto Supabase: Database → Replication / Publication `supabase_realtime` debe incluir esas tablas (si no, el polling sigue bastando).
 
 Informes (`lib/analytics`):
@@ -142,7 +163,7 @@ Tenant M365 puede bloquear forward externo (`550 5.7.520`).
 La regla de Outlook puede copiar a Resend también el correo **saliente** desde `incidencias@…`. Ese eco **no** debe crear ticket: el comentario ya se guardó en `replyAction`.
 
 - `lib/email/system-addresses.ts` + webhook: si `From` es dirección del helpdesk → `{ ignored: "helpdesk_outbound_echo" }`.
-- Lista: `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `HELP_DESK_IGNORE_FROM`, más `incidencias@` / `soporte@` / inbound Resend.
+- Lista: `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `RESEND_DEVELOPMENT_*`, `HELP_DESK_IGNORE_FROM`, más `incidencias@` / `desarrollos@` / inbound Resend.
 
 ### Threading inbound (`ingestInboundEmail`)
 
@@ -153,7 +174,7 @@ La regla de Outlook puede copiar a Resend también el correo **saliente** desde 
 
 Archivos: `email/resend.ts`, `thread-index.ts`, `threading.ts`, `headers.ts`, `system-addresses.ts`, `api/webhooks/resend/route.ts`.
 
-Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `RESEND_WEBHOOK_SECRET`.
+Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `RESEND_DEVELOPMENT_INBOUND_EMAIL`, `RESEND_DEVELOPMENT_FROM_EMAIL`, `RESEND_DEVELOPMENT_REPLY_TO`, `RESEND_WEBHOOK_SECRET`.
 
 ---
 

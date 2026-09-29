@@ -8,6 +8,11 @@ import {
 } from "@/lib/email/headers";
 import { isHelpdeskSystemAddress } from "@/lib/email/system-addresses";
 import { isDemoMode } from "@/lib/env";
+import {
+  classifyInboundMailbox,
+  collectInboundRecipients,
+} from "@/lib/email/mailbox-routing";
+import { ingestDevelopmentInboundEmail } from "@/lib/developments/service";
 import { ingestInboundEmail } from "@/lib/tickets/service";
 
 type ResendInboundPayload = {
@@ -100,12 +105,16 @@ async function resolveInboundContent(data: {
   references: string | null;
   threadIndex: string | null;
   threadTopic: string | null;
+  to: string | string[] | null;
+  headers: Record<string, string>;
 }> {
   let fromRaw = data.from ?? "";
   let subject = data.subject ?? "(sin asunto)";
   let text: string | null = data.text ?? null;
   let html: string | null = data.html ?? null;
   let headers: Record<string, string> = {};
+  let webhookTo: string | string[] | null =
+    (data as { to?: string | string[] }).to ?? null;
   let webhookMessageId: string | null = data.message_id ?? null;
 
   if (data.email_id && process.env.RESEND_API_KEY) {
@@ -120,6 +129,7 @@ async function resolveInboundContent(data: {
       text = email.text ?? text;
       html = email.html ?? html;
       headers = (email.headers ?? {}) as Record<string, string>;
+      webhookTo = (email as { to?: string | string[] }).to ?? webhookTo;
       webhookMessageId =
         (email as { message_id?: string }).message_id ||
         headerGet(headers, "Message-ID") ||
@@ -149,6 +159,8 @@ async function resolveInboundContent(data: {
     references,
     threadIndex,
     threadTopic,
+    to: webhookTo,
+    headers,
   };
 }
 
@@ -180,6 +192,8 @@ export async function POST(req: Request) {
   let references: string | null;
   let threadIndex: string | null;
   let threadTopic: string | null;
+  let to: string | string[] | null;
+  let headers: Record<string, string>;
   try {
     ({
       fromRaw,
@@ -190,6 +204,8 @@ export async function POST(req: Request) {
       references,
       threadIndex,
       threadTopic,
+      to,
+      headers,
     } = await resolveInboundContent(data));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error al leer el correo";
@@ -216,7 +232,11 @@ export async function POST(req: Request) {
     });
   }
 
-  const result = await ingestInboundEmail({
+  const mailbox = classifyInboundMailbox(
+    collectInboundRecipients({ to, headers })
+  );
+
+  const ingestInput = {
     subject,
     body,
     senderEmail: email,
@@ -226,10 +246,24 @@ export async function POST(req: Request) {
     referencesHeader: references,
     threadIndex,
     threadTopic,
-  });
+  };
+
+  if (mailbox === "development") {
+    const result = await ingestDevelopmentInboundEmail(ingestInput);
+    return NextResponse.json({
+      ok: true,
+      mailbox: "development",
+      created: result.created,
+      request_id: result.request.id,
+      request_number: result.request.request_number,
+    });
+  }
+
+  const result = await ingestInboundEmail(ingestInput);
 
   return NextResponse.json({
     ok: true,
+    mailbox: "support",
     created: result.created,
     ticket_id: result.ticket.id,
     ticket_number: result.ticket.ticket_number,

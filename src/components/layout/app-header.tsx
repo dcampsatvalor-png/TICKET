@@ -9,7 +9,7 @@ export function AppHeader({
   active = "tickets",
 }: {
   profile: Profile | null;
-  active?: "tickets" | "informes";
+  active?: "tickets" | "informes" | "desarrollos";
 }) {
   const demo = isDemoMode();
 
@@ -49,6 +49,16 @@ export function AppHeader({
               }
             >
               Informes
+            </Link>
+            <Link
+              href="/desarrollos"
+              className={
+                active === "desarrollos"
+                  ? "rounded-md bg-violet-100 px-3 py-1.5 text-sm font-medium text-violet-900"
+                  : "rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }
+            >
+              Desarrollos
             </Link>
           </nav>
         </div>
