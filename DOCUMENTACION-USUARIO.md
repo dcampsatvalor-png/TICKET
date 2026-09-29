@@ -25,7 +25,7 @@ URL de producción (orientativa): `https://ticket-yuwb.vercel.app`
 
 1. Abrir la URL del panel.
 2. Ir a **Login** con el usuario y contraseña que os hayan creado (cuenta de agente).
-3. Tras entrar veréis el menú: **Tickets** | **Informes** | **Desarrollos**.
+3. Tras entrar veréis el menú: **Incidencias** | **Reportes** | **Desarrollos**.
 
 Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 
@@ -35,7 +35,7 @@ Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 
 1. Alguien envía un correo a **`incidencias@grupoatvalor.com`**.
 2. El sistema crea un ticket **Abierto** (o añade el mensaje a un ticket ya existente si es una respuesta al mismo hilo).
-3. Vosotros lo gestionáis en **Tickets**.
+3. Vosotros lo gestionáis en **Incidencias**.
 
 ### Buenas prácticas para quien abre la incidencia
 
@@ -45,7 +45,7 @@ Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 
 ---
 
-## 4. Pantalla Tickets
+## 4. Pantalla Incidencias
 
 ### Actualización automática
 
@@ -120,12 +120,17 @@ Al responder en público, el correo sale como soporte (buzón de incidencias) y,
 
 ---
 
-## 7. Pantalla Informes
+## 7. Pantalla Reportes
 
-Sirve para ver, en un periodo (Hoy, 7 días, 30 días, este mes o fechas a medida):
+Sirve para ver, en un periodo (Hoy, 7 días, 30 días, este mes o fechas a medida), **dos bloques**:
 
-- Cuántas incidencias se **crearon** en ese periodo.
-- Cómo están **ahora** (Abierto, En proceso, Resuelto, Cerrado, Anulado), con colores.
+1. **Incidencias** (soporte IT)
+2. **Desarrollos** (peticiones a desarrollos@)
+
+En cada bloque:
+
+- Cuántas se **crearon** en ese periodo.
+- Cómo están **ahora** (Abierto, En progreso, Resuelto, Cerrado, Anulado), con colores.
 - Cuántas de las creadas están **sin asignar** (sin contar anuladas).
 - Media de altas por día.
 - Tabla **por agente**: asignadas, resueltas ahora, activas.
@@ -133,18 +138,16 @@ Sirve para ver, en un periodo (Hoy, 7 días, 30 días, este mes o fechas a medid
 ### Cómo leer los números
 
 - Los cuadrados de estado son el **estado actual** de las creadas en el periodo (no un histórico de “cuántas veces se cambió de estado”).
-- Podéis **pulsar** un cuadrado (p. ej. Anulado) y os lleva a la lista de tickets con ese filtro.
+- Podéis **pulsar** un cuadrado (p. ej. Anulado) y os lleva al listado correspondiente (**Incidencias** o **Desarrollos**) con ese filtro y el mismo periodo.
 - **Creadas** = total de altas del periodo.  
-  La suma Abierto + En proceso + Resuelto + Cerrado + Anulado debe coincidir con **Creadas**.
+  La suma Abierto + En progreso + Resuelto + Cerrado + Anulado debe coincidir con **Creadas**.
 
-### Ejemplo de regla en Informes
+### Ejemplo de regla
 
 Si hay 5 anuladas sin agente:
 
 - Entran en el KPI **Anulado**.
 - **No** suman en **Sin asignar**.
-
----
 
 ## 8. Pantalla Desarrollos
 
@@ -156,33 +159,33 @@ Espacio **independiente** de las incidencias de soporte IT.
 2. El sistema crea una petición **D#número** (Abierta) o añade el mensaje al mismo hilo si es una respuesta.
 3. Las gestionáis en **Desarrollos** del menú.
 
-En Outlook debe existir una regla similar a la de incidencias (copia al inbound de Resend) para ese buzón. Si el correo solo llega a Resend sin conservar el destinatario original, puede acabar en Tickets; el administrador debe asegurar que en los encabezados figure `desarrollos@…`.
+En Outlook debe existir una regla similar a la de incidencias (copia al inbound de Resend) para ese buzón. Si el correo solo llega a Resend sin conservar el destinatario original, puede acabar en Incidencias; el administrador debe asegurar que en los encabezados figure `desarrollos@…`.
 
 ### Uso del panel
 
-- Listado con filtros por **estado** (mismos estados que tickets: Abierto, En proceso, Resuelto, Cerrado, Anulado).
+- Listado con filtros por **estado** (mismos estados: Abierto, En proceso, Resuelto, Cerrado, Anulado).
 - Detalle con cronología, asignación, notas internas y **respuesta pública** al solicitante.
 - Las respuestas salen desde **desarrollos@…** con `[Desarrollo #N]` en el asunto para mantener el hilo.
-- **Actualización automática** igual que en Tickets.
+- **Actualización automática** igual que en Incidencias.
 
-### Diferencia con Tickets
+### Diferencia con Incidencias
 
-| | Tickets (IT) | Desarrollos |
+| | Incidencias (IT) | Desarrollos |
 |---|---|---|
 | Buzón | incidencias@grupoatvalor.com | desarrollos@tasacioneshipotecarias.com |
 | Numeración | #1001… | D#2001… |
-| Informes BI | Sí (incidencias) | No (solo esta pantalla) |
+| Reportes BI | Bloque Incidencias | Bloque Desarrollos (misma pantalla Reportes) |
 
 ---
 
 ## 9. Flujo recomendado del día a día
 
-1. Abrir **Tickets** → filtro **Sin asignar** (o **Abierto**).
+1. Abrir **Incidencias** → filtro **Sin asignar** (o **Abierto**).
 2. Asignaros la incidencia y pasar a **En proceso**.
 3. Hablar con el usuario con **respuesta pública** si hace falta.
 4. Al terminar → **Resuelto** (y más adelante **Cerrado** si aplica).
 5. Si no procede → **Anulado** (no quedará engordando “sin asignar”).
-6. Revisar **Informes** semanalmente (7 días / este mes) para carga por persona.
+6. Revisar **Reportes** semanalmente (7 días / este mes) para carga por persona (incidencias y desarrollos).
 7. Peticiones de producto / nuevas funcionalidades → buzón **desarrollos@** y pantalla **Desarrollos**.
 
 ---
@@ -204,6 +207,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-29 | Menú renombrado a **Incidencias** y **Reportes**; Reportes incluye métricas de Desarrollos |
 | 2026-09-29 | Nueva pantalla **Desarrollos** para peticiones a desarrollos@tasacioneshipotecarias.com |
 | 2026-09-24 | Periodo (Hoy/7d/…) también en Tickets; sincronizado con Informes al pulsar los KPIs |
 | 2026-09-24 | Al responder desde el panel **ya no se crea un ticket duplicado** (se ignora el eco del correo de soporte) |

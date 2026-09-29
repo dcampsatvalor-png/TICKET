@@ -90,7 +90,7 @@ export default async function TicketsPage({
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-2">
             <h1 className="font-heading text-3xl font-semibold tracking-tight text-slate-900">
-              Tickets
+              Incidencias
             </h1>
             <p className="max-w-xl text-slate-600">
               Gestiona incidencias entrantes por correo y responde desde el panel.

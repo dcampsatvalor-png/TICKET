@@ -21,7 +21,7 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 const ASSIGNMENT_OPTIONS: { value: AssignmentFilter; label: string }[] = [
   { value: "all", label: "Todos" },
-  { value: "mine", label: "Mis tickets" },
+  { value: "mine", label: "Mis incidencias" },
   { value: "unassigned", label: "Sin asignar" },
 ];
 
@@ -233,7 +233,7 @@ export function TicketList({ tickets }: { tickets: TicketListItem[] }) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/60 px-6 py-16 text-center">
         <Inbox className="mb-3 size-8 text-slate-400" />
-        <p className="font-medium text-slate-800">No hay tickets con estos filtros</p>
+        <p className="font-medium text-slate-800">No hay incidencias con estos filtros</p>
         <p className="mt-1 max-w-sm text-sm text-slate-500">
           Prueba a cambiar el periodo, el estado o la asignación, o espera a que
           lleguen nuevos correos.
@@ -244,7 +244,7 @@ export function TicketList({ tickets }: { tickets: TicketListItem[] }) {
 
   return (
     <>
-      {isPending && <LoadingOverlay label="Abriendo ticket…" />}
+      {isPending && <LoadingOverlay label="Abriendo incidencia…" />}
       <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50">
         {tickets.map((ticket, index) => (
           <li

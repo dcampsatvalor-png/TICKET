@@ -113,14 +113,14 @@ Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo
 | Ruta | Rol |
 |---|---|
 | `/login` | Auth |
-| `/tickets` | Listado + filtros (periodo + estado + asignación) + **LiveRefresh** |
-| `/tickets/[id]` | Detalle + **LiveRefresh** |
-| `/informes` | KPIs periodo + tabla agentes |
-| `/desarrollos` | Listado peticiones desarrollo + **LiveRefresh** |
+| `/tickets` | UI **Incidencias** — listado + filtros + **LiveRefresh** |
+| `/tickets/[id]` | Detalle incidencia + **LiveRefresh** |
+| `/informes` | UI **Reportes** — KPIs Incidencias + Desarrollos + tablas agentes |
+| `/desarrollos` | Listado peticiones desarrollo + filtros periodo/estado + **LiveRefresh** |
 | `/desarrollos/[id]` | Detalle + **LiveRefresh** |
 | `POST /api/webhooks/resend` | Inbound (JSON incluye `mailbox`: `support` \| `development`) |
 
-Query compartida periodo↔tickets: `lib/tickets/query.ts` (`buildTicketsHref`). Los KPI de Informes pasan `periodo`/`desde`/`hasta` al listado. `listTickets` filtra por `created_at` cuando hay rango (`resolveOptionalDateRange`).
+Query compartida: `lib/tickets/query.ts` (`buildTicketsHref`) y `lib/developments/query.ts` (`buildDesarrollosHref`). Los KPI de Reportes pasan `periodo`/`desde`/`hasta` al listado. Analytics: `getTicketAnalytics` + `getDevelopmentAnalytics` en `lib/analytics/service.ts`.
 
 ### Actualización en vivo (`components/live-refresh.tsx`)
 
@@ -128,12 +128,13 @@ Query compartida periodo↔tickets: `lib/tickets/query.ts` (`buildTicketsHref`).
 - Opcional: Supabase Realtime en tablas `tickets`, `ticket_comments` y, en Desarrollos, `development_requests` / `development_request_comments` (`extraTables` en `LiveRefresh`).
 - Para que Realtime funcione en el proyecto Supabase: Database → Replication / Publication `supabase_realtime` debe incluir esas tablas (si no, el polling sigue bastando).
 
-Informes (`lib/analytics`):
+Reportes (`lib/analytics` + `reports-view.tsx`):
 
 - Periodo: hoy / 7d / 30d / mes / custom (`period.ts`, TZ Europe/Madrid para claves de día).
-- KPIs = **estado actual** de tickets con `created_at` en rango (no contadores por `updated_at` de transiciones).
+- Dos bloques: Incidencias y Desarrollos (misma lógica de KPIs).
+- KPIs = **estado actual** de ítems con `created_at` en rango.
 - Cards de estado usan `STATUS_STYLES` de `status-badge.tsx`.
-- Clic → `/tickets?status=…` o `assignment=unassigned`.
+- Clic → `/tickets?…` o `/desarrollos?…` con status/assignment/periodo.
 
 ---
 

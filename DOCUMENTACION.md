@@ -7,7 +7,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 | **[DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)** | Agentes IT y uso diario del panel (estados, filtros, Informes, reglas de negocio en lenguaje claro) |
 | **[DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)** | Desarrollo, arquitectura, correo, BD, variables, historial de commits |
 
-Última actualización: 2026-09-29
+Última actualización: 2026-09-29 (nombres Incidencias/Reportes + reportes de Desarrollos)
 
 ---
 
@@ -39,6 +39,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-29 | Menú: **Incidencias** / **Reportes** / Desarrollos; Reportes incluye bloque Desarrollos |
 | 2026-09-29 | Nueva sección **Desarrollos** + enrutamiento inbound por buzón |
 | 2026-09-24 | Periodo sincronizado Informes ↔ Tickets |
 | 2026-09-24 | Fix: respuesta del agente ya no abre ticket duplicado |

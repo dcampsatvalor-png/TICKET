@@ -1,9 +1,9 @@
 import type {
+  AssignmentFilter,
   DevelopmentRequest,
   DevelopmentRequestComment,
   DevelopmentRequestListItem,
   DevelopmentRequestWithRelations,
-  Profile,
   StatusFilter,
   TicketStatus,
 } from "@/types/database";
@@ -62,14 +62,42 @@ function getStore(): DevStore {
   return globalThis.__developmentDemoStore;
 }
 
+export function listAllDemoDevelopmentsWithAssignee(): DevelopmentRequestListItem[] {
+  const agents = getDemoAgents();
+  return getStore().requests.map((r) => ({
+    ...r,
+    assignee: agents.find((p) => p.id === r.assigned_to) ?? null,
+  }));
+}
+
 export function listDemoDevelopmentRequests(filters: {
   status: StatusFilter;
+  assignment?: AssignmentFilter;
   currentUserId: string;
+  createdFrom?: Date | null;
+  createdTo?: Date | null;
 }): DevelopmentRequestListItem[] {
   const store = getStore();
   const agents = getDemoAgents();
+  const assignment = filters.assignment ?? "all";
   return store.requests
     .filter((r) => ticketMatchesStatusFilter(r.status, filters.status))
+    .filter((r) => {
+      if (assignment === "mine") return r.assigned_to === filters.currentUserId;
+      if (assignment === "unassigned") {
+        return !r.assigned_to && r.status !== "cancelled";
+      }
+      return true;
+    })
+    .filter((r) => {
+      if (filters.createdFrom && new Date(r.created_at) < filters.createdFrom) {
+        return false;
+      }
+      if (filters.createdTo && new Date(r.created_at) > filters.createdTo) {
+        return false;
+      }
+      return true;
+    })
     .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
     .map((r) => ({
       ...r,

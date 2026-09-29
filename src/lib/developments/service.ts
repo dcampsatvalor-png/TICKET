@@ -21,6 +21,7 @@ import {
 } from "@/lib/email/threading";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import type {
+  AssignmentFilter,
   DevelopmentRequest,
   DevelopmentRequestComment,
   DevelopmentRequestListItem,
@@ -35,6 +36,9 @@ export { getCurrentProfile, listAgents };
 
 export async function listDevelopmentRequests(filters: {
   status: StatusFilter;
+  assignment?: AssignmentFilter;
+  createdFrom?: Date | null;
+  createdTo?: Date | null;
 }): Promise<DevelopmentRequestListItem[]> {
   const profile = await getCurrentProfile();
   if (!profile) return [];
@@ -42,7 +46,10 @@ export async function listDevelopmentRequests(filters: {
   if (isDemoMode()) {
     return listDemoDevelopmentRequests({
       status: filters.status,
+      assignment: filters.assignment ?? "all",
       currentUserId: profile.id,
+      createdFrom: filters.createdFrom,
+      createdTo: filters.createdTo,
     });
   }
 
@@ -58,6 +65,17 @@ export async function listDevelopmentRequests(filters: {
     query = query.in("status", ["resolved", "closed"]);
   } else if (filters.status !== "all") {
     query = query.eq("status", filters.status);
+  }
+  if (filters.assignment === "mine") {
+    query = query.eq("assigned_to", profile.id);
+  } else if (filters.assignment === "unassigned") {
+    query = query.is("assigned_to", null).neq("status", "cancelled");
+  }
+  if (filters.createdFrom) {
+    query = query.gte("created_at", filters.createdFrom.toISOString());
+  }
+  if (filters.createdTo) {
+    query = query.lte("created_at", filters.createdTo.toISOString());
   }
 
   const { data, error } = await query;

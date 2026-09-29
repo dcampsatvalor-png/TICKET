@@ -38,7 +38,7 @@ export function AppHeader({
                   : "rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }
             >
-              Tickets
+              Incidencias
             </Link>
             <Link
               href="/informes"
@@ -48,7 +48,7 @@ export function AppHeader({
                   : "rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               }
             >
-              Informes
+              Reportes
             </Link>
             <Link
               href="/desarrollos"

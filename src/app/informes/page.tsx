@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import { ReportsView } from "@/components/analytics/reports-view";
-import { getTicketAnalytics } from "@/lib/analytics/service";
+import {
+  getDevelopmentAnalytics,
+  getTicketAnalytics,
+} from "@/lib/analytics/service";
 import {
   madridDateKey,
   resolveDateRange,
@@ -9,7 +12,7 @@ import {
 import { getCurrentProfile } from "@/lib/tickets/service";
 import { isDemoMode } from "@/lib/env";
 
-export default async function InformesPage({
+export default async function ReportesPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -29,7 +32,10 @@ export default async function InformesPage({
     from: params.desde,
     to: params.hasta,
   });
-  const analytics = await getTicketAnalytics(range, "day");
+  const [tickets, developments] = await Promise.all([
+    getTicketAnalytics(range, "day"),
+    getDevelopmentAnalytics(range, "day"),
+  ]);
 
   return (
     <div className="min-h-screen">
@@ -37,16 +43,18 @@ export default async function InformesPage({
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-8 space-y-2">
           <h1 className="font-heading text-3xl font-semibold tracking-tight text-slate-900">
-            Informes
+            Reportes
           </h1>
           <p className="max-w-2xl text-slate-600">
-            Volumen de incidencias creadas en el periodo y cómo están ahora, por
-            estado y por agente.
+            Volumen y estado actual de <span className="font-medium">incidencias</span>{" "}
+            y <span className="font-medium">desarrollos</span> creados en el periodo,
+            por estado y por agente.
           </p>
         </div>
 
         <ReportsView
-          analytics={analytics}
+          tickets={tickets}
+          developments={developments}
           preset={range.preset}
           from={madridDateKey(range.from)}
           to={madridDateKey(range.to)}

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Lightbulb } from "lucide-react";
 import type { DevelopmentRequestListItem, StatusFilter } from "@/types/database";
+import type { PeriodPreset } from "@/lib/analytics/period";
+import { buildDesarrollosHref } from "@/lib/developments/query";
 import { RelativeTime, StatusBadge } from "@/components/tickets/status-badge";
 import { LoadingOverlay } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -18,14 +20,44 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "cancelled", label: "Anulado" },
 ];
 
-function buildHref(status: StatusFilter): string {
-  if (status === "all") return "/desarrollos";
-  return `/desarrollos?status=${status}`;
-}
+const PERIOD_OPTIONS: { value: PeriodPreset | "all"; label: string }[] = [
+  { value: "all", label: "Todo" },
+  { value: "today", label: "Hoy" },
+  { value: "7d", label: "7 días" },
+  { value: "30d", label: "30 días" },
+  { value: "month", label: "Este mes" },
+  { value: "custom", label: "Personalizado" },
+];
 
-export function DevelopmentFilters({ status }: { status: StatusFilter }) {
+export function DevelopmentFilters({
+  status,
+  periodo,
+  desde,
+  hasta,
+  rangeLabel,
+}: {
+  status: StatusFilter;
+  periodo: PeriodPreset | "all";
+  desde: string;
+  hasta: string;
+  rangeLabel: string | null;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  function hrefFor(next: {
+    status?: StatusFilter;
+    periodo?: PeriodPreset | "all";
+    desde?: string;
+    hasta?: string;
+  }) {
+    return buildDesarrollosHref({
+      status: next.status ?? status,
+      periodo: next.periodo ?? periodo,
+      desde: next.desde ?? desde,
+      hasta: next.hasta ?? hasta,
+    });
+  }
 
   function onNavigate(href: string) {
     startTransition(() => router.push(href));
@@ -34,23 +66,98 @@ export function DevelopmentFilters({ status }: { status: StatusFilter }) {
   return (
     <>
       {isPending && <LoadingOverlay label="Aplicando filtros…" />}
-      <div className="flex flex-wrap gap-2">
-        {STATUS_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            disabled={isPending || status === opt.value}
-            onClick={() => onNavigate(buildHref(opt.value))}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm transition-colors",
-              status === opt.value
-                ? "bg-violet-700 text-white shadow-sm"
-                : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Periodo
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={isPending || periodo === opt.value}
+                onClick={() => onNavigate(hrefFor({ periodo: opt.value }))}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  periodo === opt.value
+                    ? "bg-violet-700 text-white shadow-sm"
+                    : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {periodo === "custom" ? (
+            <form
+              className="flex flex-wrap items-end gap-3 pt-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                onNavigate(
+                  hrefFor({
+                    periodo: "custom",
+                    desde: String(fd.get("desde") || desde),
+                    hasta: String(fd.get("hasta") || hasta),
+                  })
+                );
+              }}
+            >
+              <label className="space-y-1 text-sm">
+                <span className="text-xs font-medium text-slate-500">Desde</span>
+                <input
+                  type="date"
+                  name="desde"
+                  defaultValue={desde}
+                  className="block rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                />
+              </label>
+              <label className="space-y-1 text-sm">
+                <span className="text-xs font-medium text-slate-500">Hasta</span>
+                <input
+                  type="date"
+                  name="hasta"
+                  defaultValue={hasta}
+                  className="block rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                className="rounded-lg bg-violet-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-800"
+              >
+                Aplicar
+              </button>
+            </form>
+          ) : null}
+          {rangeLabel ? (
+            <p className="text-sm text-slate-500">Creadas entre {rangeLabel}</p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Estado
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={isPending || status === opt.value}
+                onClick={() => onNavigate(hrefFor({ status: opt.value }))}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  status === opt.value
+                    ? "bg-violet-700 text-white shadow-sm"
+                    : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </>
   );

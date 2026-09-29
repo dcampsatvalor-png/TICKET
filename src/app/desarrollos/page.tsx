@@ -10,7 +10,13 @@ import {
   listDevelopmentRequests,
 } from "@/lib/developments/service";
 import { isDemoMode } from "@/lib/env";
-import type { StatusFilter } from "@/types/database";
+import {
+  formatRangeLabel,
+  madridDateKey,
+  resolveOptionalDateRange,
+  type PeriodPreset,
+} from "@/lib/analytics/period";
+import type { AssignmentFilter, StatusFilter } from "@/types/database";
 import { Suspense } from "react";
 
 function parseStatus(value: string | undefined): StatusFilter {
@@ -28,10 +34,34 @@ function parseStatus(value: string | undefined): StatusFilter {
   return "all";
 }
 
+function parseAssignment(value: string | undefined): AssignmentFilter {
+  if (value === "mine" || value === "unassigned" || value === "all") return value;
+  return "all";
+}
+
+function parsePeriodo(value: string | undefined): PeriodPreset | "all" {
+  if (
+    value === "today" ||
+    value === "7d" ||
+    value === "30d" ||
+    value === "month" ||
+    value === "custom"
+  ) {
+    return value;
+  }
+  return "all";
+}
+
 export default async function DesarrollosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    assignment?: string;
+    periodo?: string;
+    desde?: string;
+    hasta?: string;
+  }>;
 }) {
   const profile = await getCurrentProfile();
   if (!profile && !isDemoMode()) {
@@ -40,7 +70,23 @@ export default async function DesarrollosPage({
 
   const params = await searchParams;
   const status = parseStatus(params.status);
-  const requests = await listDevelopmentRequests({ status });
+  const assignment = parseAssignment(params.assignment);
+  const periodo = parsePeriodo(params.periodo);
+  const range = resolveOptionalDateRange({
+    preset: periodo,
+    from: params.desde,
+    to: params.hasta,
+  });
+  const desde = range ? madridDateKey(range.from) : madridDateKey(new Date());
+  const hasta = range ? madridDateKey(range.to) : madridDateKey(new Date());
+  const rangeLabel = range ? formatRangeLabel(range.from, range.to) : null;
+
+  const requests = await listDevelopmentRequests({
+    status,
+    assignment,
+    createdFrom: range?.from ?? null,
+    createdTo: range?.to ?? null,
+  });
 
   return (
     <div className="min-h-screen">
@@ -70,7 +116,13 @@ export default async function DesarrollosPage({
 
         <div className="mb-6">
           <Suspense fallback={null}>
-            <DevelopmentFilters status={status} />
+            <DevelopmentFilters
+              status={status}
+              periodo={periodo}
+              desde={desde}
+              hasta={hasta}
+              rangeLabel={rangeLabel}
+            />
           </Suspense>
         </div>
 

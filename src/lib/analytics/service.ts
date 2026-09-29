@@ -3,13 +3,19 @@ import {
   listAllDemoTicketsWithAssignee,
   getDemoAgents,
 } from "@/lib/demo/store";
+import { listAllDemoDevelopmentsWithAssignee } from "@/lib/demo/developments-store";
 import {
   formatRangeLabel,
   type BucketGranularity,
   type DateRange,
 } from "@/lib/analytics/period";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, TicketListItem, TicketStatus } from "@/types/database";
+import type {
+  DevelopmentRequestListItem,
+  Profile,
+  TicketListItem,
+  TicketStatus,
+} from "@/types/database";
 import { STATUS_LABELS } from "@/types/database";
 
 const RESOLVED_STATUSES: TicketStatus[] = ["resolved", "closed"];
@@ -34,6 +40,9 @@ export type TicketAnalytics = {
   byAgent: AgentAnalyticsRow[];
 };
 
+/** Same shape as ticket analytics; used for development requests in Reportes. */
+export type DevelopmentAnalytics = TicketAnalytics;
+
 function inRange(iso: string, from: Date, to: Date): boolean {
   const t = new Date(iso).getTime();
   return t >= from.getTime() && t <= to.getTime();
@@ -43,12 +52,19 @@ function isResolvedStatus(status: TicketStatus): boolean {
   return RESOLVED_STATUSES.includes(status);
 }
 
+type AnalyticsItem = {
+  created_at: string;
+  status: TicketStatus;
+  assigned_to: string | null;
+  assignee: Profile | null;
+};
+
 function buildAnalytics(
-  tickets: TicketListItem[],
+  items: AnalyticsItem[],
   agents: Profile[],
   range: DateRange
 ): TicketAnalytics {
-  const createdInRange = tickets.filter((t) =>
+  const createdInRange = items.filter((t) =>
     inRange(t.created_at, range.from, range.to)
   );
 
@@ -162,4 +178,41 @@ export async function getTicketAnalytics(
 ): Promise<TicketAnalytics> {
   const { tickets, agents } = await listTicketsForAnalytics();
   return buildAnalytics(tickets, agents, range);
+}
+
+async function listDevelopmentsForAnalytics(): Promise<{
+  requests: DevelopmentRequestListItem[];
+  agents: Profile[];
+}> {
+  if (isDemoMode()) {
+    return {
+      requests: listAllDemoDevelopmentsWithAssignee(),
+      agents: getDemoAgents(),
+    };
+  }
+
+  const supabase = await createClient();
+  const [requestsRes, agentsRes] = await Promise.all([
+    supabase
+      .from("development_requests")
+      .select("*, assignee:profiles!development_requests_assigned_to_fkey(*)")
+      .order("created_at", { ascending: false }),
+    supabase.from("profiles").select("*").order("full_name"),
+  ]);
+
+  if (requestsRes.error) throw requestsRes.error;
+  if (agentsRes.error) throw agentsRes.error;
+
+  return {
+    requests: (requestsRes.data ?? []) as DevelopmentRequestListItem[],
+    agents: (agentsRes.data ?? []) as Profile[],
+  };
+}
+
+export async function getDevelopmentAnalytics(
+  range: DateRange,
+  _granularity: BucketGranularity = "day"
+): Promise<DevelopmentAnalytics> {
+  const { requests, agents } = await listDevelopmentsForAnalytics();
+  return buildAnalytics(requests, agents, range);
 }
