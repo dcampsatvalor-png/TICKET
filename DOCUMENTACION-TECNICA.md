@@ -82,9 +82,11 @@ Migraciones:
 
 Inbound: si el destinatario detectado incluye `desarrollos@tasacioneshipotecarias.com` (env `RESEND_DEVELOPMENT_INBOUND_EMAIL`), el webhook usa `ingestDevelopmentInboundEmail` en lugar de tickets.
 
+**Allowlist de remitentes** (solo Desarrollos): `isAllowedDevelopmentSender` en `mailbox-routing.ts`. Por defecto `dcamps@grupoatvalor.com` y `d.camps@tasacioneshipotecarias.com` (`RESEND_DEVELOPMENT_ALLOWED_FROM`). Otros From → `{ ignored: "development_sender_not_allowed" }` (no crea petición).
+
 Outbound: `sendDevelopmentReplyEmail` (`RESEND_DEVELOPMENT_FROM_EMAIL`, Reply-To desarrollos@).
 
-Routing: `lib/email/mailbox-routing.ts` (`collectInboundRecipients`, `classifyInboundMailbox`).
+Routing: `lib/email/mailbox-routing.ts` (`collectInboundRecipients`, `classifyInboundMailbox`, `isAllowedDevelopmentSender`).
 
 Tag de hilo en asunto: `[Desarrollo #N]` — `lib/email/development-threading.ts`.
 
@@ -175,7 +177,7 @@ La regla de Outlook puede copiar a Resend también el correo **saliente** desde 
 
 Archivos: `email/resend.ts`, `thread-index.ts`, `threading.ts`, `headers.ts`, `system-addresses.ts`, `api/webhooks/resend/route.ts`.
 
-Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `RESEND_DEVELOPMENT_INBOUND_EMAIL`, `RESEND_DEVELOPMENT_FROM_EMAIL`, `RESEND_DEVELOPMENT_REPLY_TO`, `RESEND_WEBHOOK_SECRET`.
+Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `RESEND_INBOUND_EMAIL`, `RESEND_DEVELOPMENT_INBOUND_EMAIL`, `RESEND_DEVELOPMENT_FROM_EMAIL`, `RESEND_DEVELOPMENT_REPLY_TO`, `RESEND_DEVELOPMENT_ALLOWED_FROM`, `RESEND_WEBHOOK_SECRET`.
 
 ---
 

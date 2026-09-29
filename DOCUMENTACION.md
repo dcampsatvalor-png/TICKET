@@ -14,7 +14,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 ## Reglas de negocio destacadas (resumen)
 
 - Buzón de entrada de usuarios: **`incidencias@grupoatvalor.com`**.
-- Buzón de **nuevos desarrollos**: **`desarrollos@tasacioneshipotecarias.com`** → pantalla **Desarrollos** (no mezcla con incidencias IT).
+- Buzón de **nuevos desarrollos**: **`desarrollos@tasacioneshipotecarias.com`** → pantalla **Desarrollos** (no mezcla con incidencias IT). **Solo** se ingieren correos From `dcamps@grupoatvalor.com` o `d.camps@tasacioneshipotecarias.com`.
 - Estados: Abierto, En proceso, Resuelto, Cerrado, **Anulado**.
 - **Las incidencias Anuladas no cuentan como “Sin asignar”** (ni en Informes ni en el filtro de tickets), aunque no tengan agente.
 - Informes muestran el **estado actual** de las creadas en el periodo (no un histórico de cambios de estado).
@@ -39,6 +39,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-29 | Desarrollos: allowlist remitentes (dcamps@ / d.camps@) |
 | 2026-09-29 | Menú: Incidencias → Desarrollos → Reportes; Reportes con pestañas Incidencias/Desarrollos |
 | 2026-09-29 | Menú: **Incidencias** / **Reportes** / Desarrollos; Reportes incluye bloque Desarrollos |
 | 2026-09-29 | Nueva sección **Desarrollos** + enrutamiento inbound por buzón |

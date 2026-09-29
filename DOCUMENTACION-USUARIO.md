@@ -156,6 +156,7 @@ Espacio **independiente** de las incidencias de soporte IT.
 ### Cómo llegan las peticiones
 
 1. Alguien envía un correo a **`desarrollos@tasacioneshipotecarias.com`** (no a incidencias@).
+   **Solo se aceptan** correos enviados desde **`dcamps@grupoatvalor.com`** o **`d.camps@tasacioneshipotecarias.com`**. Cualquier otro remitente se ignora y no crea petición.
 2. El sistema crea una petición **D#número** (Abierta) o añade el mensaje al mismo hilo si es una respuesta.
 3. Las gestionáis en **Desarrollos** del menú.
 
@@ -199,7 +200,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 | Al responder desde el panel aparecía otro ticket | Corregido: el sistema ignora el eco del correo enviado desde `incidencias@` |
 | No veo un ticket anulado en Sin asignar | Es normal: las anuladas no cuentan ahí |
 | No puedo iniciar sesión | Pedir reset de contraseña / alta de usuario agente |
-| Mi petición de desarrollo no aparece | Comprobar que el correo fue a **desarrollos@** (no incidencias@) y que Outlook reenvía/copia a Resend |
+| Mi petición de desarrollo no aparece | Comprobar que el correo fue a **desarrollos@**, que el **From** es dcamps@… o d.camps@…, y que Outlook copia a Resend |
 
 ---
 
@@ -207,6 +208,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-29 | Desarrollos: solo remitentes dcamps@grupoatvalor.com y d.camps@tasacioneshipotecarias.com |
 | 2026-09-29 | Orden menú Incidencias → Desarrollos → Reportes; Reportes con pestañas |
 | 2026-09-29 | Menú renombrado a **Incidencias** y **Reportes**; Reportes incluye métricas de Desarrollos |
 | 2026-09-29 | Nueva pantalla **Desarrollos** para peticiones a desarrollos@tasacioneshipotecarias.com |
