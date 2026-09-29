@@ -115,7 +115,7 @@ Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo
 | `/login` | Auth |
 | `/tickets` | UI **Incidencias** — listado + filtros + **LiveRefresh** |
 | `/tickets/[id]` | Detalle incidencia + **LiveRefresh** |
-| `/informes` | UI **Reportes** — KPIs Incidencias + Desarrollos + tablas agentes |
+| `/informes` | UI **Reportes** — pestañas `vista=incidencias\|desarrollos` + periodo + KPIs |
 | `/desarrollos` | Listado peticiones desarrollo + filtros periodo/estado + **LiveRefresh** |
 | `/desarrollos/[id]` | Detalle + **LiveRefresh** |
 | `POST /api/webhooks/resend` | Inbound (JSON incluye `mailbox`: `support` \| `development`) |
@@ -131,7 +131,7 @@ Query compartida: `lib/tickets/query.ts` (`buildTicketsHref`) y `lib/development
 Reportes (`lib/analytics` + `reports-view.tsx`):
 
 - Periodo: hoy / 7d / 30d / mes / custom (`period.ts`, TZ Europe/Madrid para claves de día).
-- Dos bloques: Incidencias y Desarrollos (misma lógica de KPIs).
+- Pestañas Incidencias / Desarrollos (misma lógica de KPIs; query `vista`).
 - KPIs = **estado actual** de ítems con `created_at` en rango.
 - Cards de estado usan `STATUS_STYLES` de `status-badge.tsx`.
 - Clic → `/tickets?…` o `/desarrollos?…` con status/assignment/periodo.

@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { STATUS_STYLES } from "@/components/tickets/status-badge";
 import type { TicketStatus } from "@/types/database";
 
+export type ReportesVista = "incidencias" | "desarrollos";
+
 const PRESETS: { value: PeriodPreset; label: string }[] = [
   { value: "today", label: "Hoy" },
   { value: "7d", label: "7 días" },
@@ -27,9 +29,13 @@ function buildReportesHref(params: {
   preset: PeriodPreset;
   from?: string;
   to?: string;
+  vista?: ReportesVista;
 }): string {
   const q = new URLSearchParams();
   q.set("periodo", params.preset);
+  if (params.vista && params.vista !== "incidencias") {
+    q.set("vista", params.vista);
+  }
   if (params.preset === "custom") {
     if (params.from) q.set("desde", params.from);
     if (params.to) q.set("hasta", params.to);
@@ -81,7 +87,6 @@ function Kpi({
 }
 
 function AnalyticsBlock({
-  title,
   description,
   analytics,
   listHref,
@@ -91,7 +96,6 @@ function AnalyticsBlock({
   ticketsHref,
   desarrollosHref,
 }: {
-  title: string;
   description: string;
   analytics: TicketAnalytics | DevelopmentAnalytics;
   listHref: string;
@@ -124,12 +128,7 @@ function AnalyticsBlock({
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-slate-900">
-            {title}
-          </h2>
-          <p className="text-sm text-slate-500">{description}</p>
-        </div>
+        <p className="text-sm text-slate-500">{description}</p>
         <Link href={listHref} className={linkClass}>
           {listLabel}
         </Link>
@@ -213,12 +212,14 @@ export function ReportsView({
   preset,
   from,
   to,
+  vista = "incidencias",
 }: {
   tickets: TicketAnalytics;
   developments: DevelopmentAnalytics;
   preset: PeriodPreset;
   from: string;
   to: string;
+  vista?: ReportesVista;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -226,6 +227,20 @@ export function ReportsView({
   function navigate(href: string) {
     startTransition(() => {
       router.push(href);
+    });
+  }
+
+  function reportesHref(next: {
+    preset?: PeriodPreset;
+    from?: string;
+    to?: string;
+    vista?: ReportesVista;
+  } = {}) {
+    return buildReportesHref({
+      preset: next.preset ?? preset,
+      from: next.from ?? from,
+      to: next.to ?? to,
+      vista: next.vista ?? vista,
     });
   }
 
@@ -255,9 +270,48 @@ export function ReportsView({
     });
   }
 
+  const activeAnalytics = vista === "desarrollos" ? developments : tickets;
+
   return (
-    <div className="relative space-y-10">
+    <div className="relative space-y-6">
       {pending ? <LoadingOverlay label="Actualizando reportes…" /> : null}
+
+      <div
+        role="tablist"
+        aria-label="Tipo de reporte"
+        className="flex w-full gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 sm:w-fit"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={vista === "incidencias"}
+          disabled={pending}
+          onClick={() => navigate(reportesHref({ vista: "incidencias" }))}
+          className={cn(
+            "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition sm:flex-none",
+            vista === "incidencias"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          )}
+        >
+          Incidencias
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={vista === "desarrollos"}
+          disabled={pending}
+          onClick={() => navigate(reportesHref({ vista: "desarrollos" }))}
+          className={cn(
+            "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition sm:flex-none",
+            vista === "desarrollos"
+              ? "bg-white text-violet-900 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          )}
+        >
+          Desarrollos
+        </button>
+      </div>
 
       <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="space-y-2">
@@ -270,19 +324,13 @@ export function ReportsView({
                 key={p.value}
                 type="button"
                 disabled={pending}
-                onClick={() =>
-                  navigate(
-                    buildReportesHref({
-                      preset: p.value,
-                      from,
-                      to,
-                    })
-                  )
-                }
+                onClick={() => navigate(reportesHref({ preset: p.value }))}
                 className={cn(
                   "rounded-lg border px-3 py-1.5 text-sm transition",
                   preset === p.value
-                    ? "border-teal-600 bg-teal-600 text-white"
+                    ? vista === "desarrollos"
+                      ? "border-violet-700 bg-violet-700 text-white"
+                      : "border-teal-600 bg-teal-600 text-white"
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                 )}
               >
@@ -299,7 +347,7 @@ export function ReportsView({
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
               navigate(
-                buildReportesHref({
+                reportesHref({
                   preset: "custom",
                   from: String(fd.get("desde") || from),
                   to: String(fd.get("hasta") || to),
@@ -327,7 +375,12 @@ export function ReportsView({
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-teal-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700"
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-sm font-medium text-white",
+                vista === "desarrollos"
+                  ? "bg-violet-700 hover:bg-violet-800"
+                  : "bg-teal-600 hover:bg-teal-700"
+              )}
             >
               Aplicar
             </button>
@@ -335,33 +388,31 @@ export function ReportsView({
         ) : null}
 
         <p className="text-sm text-slate-600">
-          {tickets.rangeLabel} · estado actual de lo creado en el periodo
+          {activeAnalytics.rangeLabel} · estado actual de lo creado en el periodo
         </p>
       </section>
 
-      <AnalyticsBlock
-        title="Incidencias"
-        description="Soporte IT · incidencias@grupoatvalor.com"
-        analytics={tickets}
-        listHref={ticketsHref()}
-        listLabel="Ir a incidencias"
-        avgHint="Incidencias creadas"
-        accent="teal"
-        ticketsHref={ticketsHref}
-      />
-
-      <div className="border-t border-slate-200" />
-
-      <AnalyticsBlock
-        title="Desarrollos"
-        description="Nuevas funcionalidades · desarrollos@tasacioneshipotecarias.com"
-        analytics={developments}
-        listHref={desarrollosHref()}
-        listLabel="Ir a desarrollos"
-        avgHint="Peticiones creadas"
-        accent="violet"
-        desarrollosHref={desarrollosHref}
-      />
+      {vista === "incidencias" ? (
+        <AnalyticsBlock
+          description="Soporte IT · incidencias@grupoatvalor.com"
+          analytics={tickets}
+          listHref={ticketsHref()}
+          listLabel="Ir a incidencias"
+          avgHint="Incidencias creadas"
+          accent="teal"
+          ticketsHref={ticketsHref}
+        />
+      ) : (
+        <AnalyticsBlock
+          description="Nuevas funcionalidades · desarrollos@tasacioneshipotecarias.com"
+          analytics={developments}
+          listHref={desarrollosHref()}
+          listLabel="Ir a desarrollos"
+          avgHint="Peticiones creadas"
+          accent="violet"
+          desarrollosHref={desarrollosHref}
+        />
+      )}
     </div>
   );
 }

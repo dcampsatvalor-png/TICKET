@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
-import { ReportsView } from "@/components/analytics/reports-view";
+import {
+  ReportsView,
+  type ReportesVista,
+} from "@/components/analytics/reports-view";
 import {
   getDevelopmentAnalytics,
   getTicketAnalytics,
@@ -12,6 +15,10 @@ import {
 import { getCurrentProfile } from "@/lib/tickets/service";
 import { isDemoMode } from "@/lib/env";
 
+function parseVista(value: string | undefined): ReportesVista {
+  return value === "desarrollos" ? "desarrollos" : "incidencias";
+}
+
 export default async function ReportesPage({
   searchParams,
 }: {
@@ -19,6 +26,7 @@ export default async function ReportesPage({
     periodo?: string;
     desde?: string;
     hasta?: string;
+    vista?: string;
   }>;
 }) {
   const profile = await getCurrentProfile();
@@ -27,6 +35,7 @@ export default async function ReportesPage({
   }
 
   const params = await searchParams;
+  const vista = parseVista(params.vista);
   const range = resolveDateRange({
     preset: params.periodo,
     from: params.desde,
@@ -41,14 +50,14 @@ export default async function ReportesPage({
     <div className="min-h-screen">
       <AppHeader profile={profile} active="informes" />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-8 space-y-2">
+        <div className="mb-6 space-y-2">
           <h1 className="font-heading text-3xl font-semibold tracking-tight text-slate-900">
             Reportes
           </h1>
           <p className="max-w-2xl text-slate-600">
-            Volumen y estado actual de <span className="font-medium">incidencias</span>{" "}
-            y <span className="font-medium">desarrollos</span> creados en el periodo,
-            por estado y por agente.
+            Cambia de pestaña para ver el volumen y estado de{" "}
+            <span className="font-medium">incidencias</span> o{" "}
+            <span className="font-medium">desarrollos</span> en el periodo.
           </p>
         </div>
 
@@ -58,6 +67,7 @@ export default async function ReportesPage({
           preset={range.preset}
           from={madridDateKey(range.from)}
           to={madridDateKey(range.to)}
+          vista={vista}
         />
       </main>
     </div>

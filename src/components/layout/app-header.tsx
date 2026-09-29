@@ -41,16 +41,6 @@ export function AppHeader({
               Incidencias
             </Link>
             <Link
-              href="/informes"
-              className={
-                active === "informes"
-                  ? "rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-900"
-                  : "rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-              }
-            >
-              Reportes
-            </Link>
-            <Link
               href="/desarrollos"
               className={
                 active === "desarrollos"
@@ -59,6 +49,16 @@ export function AppHeader({
               }
             >
               Desarrollos
+            </Link>
+            <Link
+              href="/informes"
+              className={
+                active === "informes"
+                  ? "rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-900"
+                  : "rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }
+            >
+              Reportes
             </Link>
           </nav>
         </div>

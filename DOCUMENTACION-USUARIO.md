@@ -25,7 +25,7 @@ URL de producción (orientativa): `https://ticket-yuwb.vercel.app`
 
 1. Abrir la URL del panel.
 2. Ir a **Login** con el usuario y contraseña que os hayan creado (cuenta de agente).
-3. Tras entrar veréis el menú: **Incidencias** | **Reportes** | **Desarrollos**.
+3. Tras entrar veréis el menú: **Incidencias** | **Desarrollos** | **Reportes**.
 
 Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 
@@ -122,12 +122,12 @@ Al responder en público, el correo sale como soporte (buzón de incidencias) y,
 
 ## 7. Pantalla Reportes
 
-Sirve para ver, en un periodo (Hoy, 7 días, 30 días, este mes o fechas a medida), **dos bloques**:
+Sirve para ver, en un periodo (Hoy, 7 días, 30 días, este mes o fechas a medida), con **pestañas** (sin hacer scroll entre reportes):
 
-1. **Incidencias** (soporte IT)
-2. **Desarrollos** (peticiones a desarrollos@)
+1. Pestaña **Incidencias** (soporte IT)
+2. Pestaña **Desarrollos** (peticiones a desarrollos@)
 
-En cada bloque:
+El periodo se comparte al cambiar de pestaña. En cada vista:
 
 - Cuántas se **crearon** en ese periodo.
 - Cómo están **ahora** (Abierto, En progreso, Resuelto, Cerrado, Anulado), con colores.
@@ -207,6 +207,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-29 | Orden menú Incidencias → Desarrollos → Reportes; Reportes con pestañas |
 | 2026-09-29 | Menú renombrado a **Incidencias** y **Reportes**; Reportes incluye métricas de Desarrollos |
 | 2026-09-29 | Nueva pantalla **Desarrollos** para peticiones a desarrollos@tasacioneshipotecarias.com |
 | 2026-09-24 | Periodo (Hoy/7d/…) también en Tickets; sincronizado con Informes al pulsar los KPIs |
