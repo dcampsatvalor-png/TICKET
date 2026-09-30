@@ -6,6 +6,8 @@ import { isDemoMode } from "@/lib/env";
 import { getCurrentProfile } from "@/lib/tickets/service";
 import { listUsers } from "@/lib/users/service";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   const profile = await getCurrentProfile();
   if (!profile && !isDemoMode()) {
