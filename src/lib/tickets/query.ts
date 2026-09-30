@@ -1,5 +1,9 @@
 import { appendPeriodSearchParams, type PeriodPreset } from "@/lib/analytics/period";
-import type { AssignmentFilter, StatusFilter } from "@/types/database";
+import type {
+  AssignmentFilter,
+  StatusFilter,
+  TicketPriority,
+} from "@/types/database";
 
 export type TicketsQuery = {
   status?: StatusFilter;
@@ -7,6 +11,8 @@ export type TicketsQuery = {
   periodo?: PeriodPreset | "all";
   desde?: string;
   hasta?: string;
+  q?: string;
+  priority?: TicketPriority | "all";
 };
 
 /** Build /tickets?… keeping status, assignment and period in sync with Informes. */
@@ -16,6 +22,8 @@ export function buildTicketsHref(q: TicketsQuery): string {
   if (q.assignment && q.assignment !== "all") {
     params.set("assignment", q.assignment);
   }
+  if (q.priority && q.priority !== "all") params.set("priority", q.priority);
+  if (q.q?.trim()) params.set("q", q.q.trim());
   appendPeriodSearchParams(params, {
     preset: q.periodo ?? "all",
     from: q.desde,

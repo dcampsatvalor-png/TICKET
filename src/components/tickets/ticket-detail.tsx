@@ -3,13 +3,24 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  addObservationAction,
   replyAction,
   updateAssigneeAction,
+  updatePriorityAction,
   updateStatusAction,
 } from "@/app/actions/tickets";
-import type { Profile, TicketStatus, TicketWithRelations } from "@/types/database";
-import { STATUS_LABELS } from "@/types/database";
-import { RelativeTime, StatusBadge } from "@/components/tickets/status-badge";
+import type {
+  Profile,
+  TicketPriority,
+  TicketStatus,
+  TicketWithRelations,
+} from "@/types/database";
+import { PRIORITY_LABELS, STATUS_LABELS } from "@/types/database";
+import {
+  PriorityBadge,
+  RelativeTime,
+  StatusBadge,
+} from "@/components/tickets/status-badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { LoadingOverlay, Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Lock, Mail, MessageSquare } from "lucide-react";
+import { ArrowLeft, ClipboardList, Lock, Mail, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 export function TicketDetail({
@@ -37,8 +48,11 @@ export function TicketDetail({
   const [pendingLabel, setPendingLabel] = useState("Procesando…");
   const [mode, setMode] = useState<"public" | "internal">("public");
   const [content, setContent] = useState("");
+  const [observation, setObservation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [obsError, setObsError] = useState<string | null>(null);
+  const [obsSuccess, setObsSuccess] = useState<string | null>(null);
 
   function onStatusChange(value: string | null) {
     if (!value) return;
@@ -54,6 +68,17 @@ export function TicketDetail({
     setPendingLabel("Asignando agente…");
     startTransition(async () => {
       await updateAssigneeAction(ticket.id, value === "none" ? null : value);
+      router.refresh();
+    });
+  }
+
+  function onPriorityChange(value: string | null) {
+    if (!value || (value !== "low" && value !== "medium" && value !== "high")) {
+      return;
+    }
+    setPendingLabel("Actualizando prioridad…");
+    startTransition(async () => {
+      await updatePriorityAction(ticket.id, value);
       router.refresh();
     });
   }
@@ -84,6 +109,29 @@ export function TicketDetail({
       router.refresh();
     });
   }
+
+  function onObservationSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setObsError(null);
+    setObsSuccess(null);
+    setPendingLabel("Guardando observación…");
+    startTransition(async () => {
+      const result = await addObservationAction({
+        ticketId: ticket.id,
+        content: observation,
+      });
+      if (!result.ok) {
+        setObsError(result.error);
+        return;
+      }
+      setObservation("");
+      setObsSuccess("Observación añadida.");
+      router.refresh();
+    });
+  }
+
+  const observations = ticket.observations ?? [];
+  const ticketPriority = ticket.priority ?? "medium";
 
   const timeline = [
     {
@@ -129,6 +177,7 @@ export function TicketDetail({
                 #{ticket.ticket_number}
               </span>
               <StatusBadge status={ticket.status} />
+              <PriorityBadge priority={ticketPriority} />
             </div>
             <h1 className="font-heading text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
               {ticket.subject}
@@ -171,6 +220,31 @@ export function TicketDetail({
               </Select>
             </div>
             <div className="space-y-1.5 flex-1">
+              <Label htmlFor="priority">Prioridad</Label>
+              <Select
+                value={ticketPriority}
+                onValueChange={onPriorityChange}
+                disabled={isPending}
+              >
+                <SelectTrigger id="priority" className="w-full bg-white">
+                  <SelectValue>
+                    {(value: TicketPriority | null) =>
+                      value ? PRIORITY_LABELS[value] : "Seleccionar"
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(PRIORITY_LABELS) as TicketPriority[]).map(
+                    (p) => (
+                      <SelectItem key={p} value={p}>
+                        {PRIORITY_LABELS[p]}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 flex-1">
               <Label htmlFor="assignee">Agente asignado</Label>
               <Select
                 value={ticket.assigned_to ?? "none"}
@@ -201,6 +275,69 @@ export function TicketDetail({
           </div>
         </div>
       </div>
+
+      <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div>
+          <h2 className="font-heading text-lg font-semibold text-slate-900">
+            Observaciones
+          </h2>
+          <p className="text-sm text-slate-500">
+            Notas del equipo sobre la incidencia. No se envían al cliente.
+          </p>
+        </div>
+        {observations.length === 0 ? (
+          <p className="text-sm text-slate-500">Aún no hay observaciones.</p>
+        ) : (
+          <ul className="space-y-3">
+            {observations.map((item) => (
+              <li
+                key={item.id}
+                className="rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3"
+              >
+                <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-indigo-100 px-1.5 py-0.5 font-medium text-indigo-900">
+                    <ClipboardList className="size-3" />
+                    Observación
+                  </span>
+                  <span className="font-medium text-slate-700">
+                    {item.author?.full_name ?? "Agente"}
+                  </span>
+                  <span className="text-slate-400">·</span>
+                  <RelativeTime date={item.created_at} />
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+                  {item.content}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+        <form onSubmit={onObservationSubmit} className="space-y-3 border-t border-slate-100 pt-4">
+          <Label htmlFor="observation">Añadir observación</Label>
+          <Textarea
+            id="observation"
+            value={observation}
+            onChange={(e) => setObservation(e.target.value)}
+            placeholder="Escribe una observación para el equipo…"
+            rows={3}
+            className="resize-y bg-slate-50/50"
+            required
+          />
+          {obsError && (
+            <p className="text-sm text-red-600" role="alert">
+              {obsError}
+            </p>
+          )}
+          {obsSuccess && (
+            <p className="text-sm text-teal-700" role="status">
+              {obsSuccess}
+            </p>
+          )}
+          <Button type="submit" disabled={isPending || !observation.trim()}>
+            {isPending ? <Spinner label="Guardando…" /> : "Guardar observación"}
+          </Button>
+        </form>
+      </section>
 
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold text-slate-900">

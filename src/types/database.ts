@@ -21,6 +21,14 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   employee: "Empleado",
 };
 
+export type TicketPriority = "low" | "medium" | "high";
+
+export const PRIORITY_LABELS: Record<TicketPriority, string> = {
+  low: "Baja",
+  medium: "Media",
+  high: "Alta",
+};
+
 export type Ticket = {
   id: string;
   ticket_number: number;
@@ -29,6 +37,7 @@ export type Ticket = {
   sender_email: string;
   sender_name: string | null;
   status: TicketStatus;
+  priority: TicketPriority;
   assigned_to: string | null;
   created_at: string;
   updated_at: string;
@@ -47,9 +56,18 @@ export type TicketComment = {
   created_at: string;
 };
 
+export type TicketObservation = {
+  id: string;
+  ticket_id: string;
+  author_id: string | null;
+  content: string;
+  created_at: string;
+};
+
 export type TicketWithRelations = Ticket & {
   assignee: Profile | null;
   comments: (TicketComment & { author: Profile | null })[];
+  observations: (TicketObservation & { author: Profile | null })[];
 };
 
 export type TicketListItem = Ticket & {

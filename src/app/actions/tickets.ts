@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 import { sendTicketReplyEmail } from "@/lib/email/resend";
 import {
   addComment,
+  addObservation,
   getCurrentProfile,
   getTicket,
   setTicketAssignee,
+  setTicketPriority,
   setTicketStatus,
   updateTicketEmailThread,
 } from "@/lib/tickets/service";
-import type { TicketStatus } from "@/types/database";
+import type { TicketPriority, TicketStatus } from "@/types/database";
 
 export async function updateStatusAction(ticketId: string, status: TicketStatus) {
   await setTicketStatus(ticketId, status);
@@ -26,6 +28,42 @@ export async function updateAssigneeAction(
   await setTicketAssignee(ticketId, assignedTo);
   revalidatePath("/tickets");
   revalidatePath(`/tickets/${ticketId}`);
+  return { ok: true as const };
+}
+
+export async function updatePriorityAction(
+  ticketId: string,
+  priority: TicketPriority
+) {
+  await setTicketPriority(ticketId, priority);
+  revalidatePath("/tickets");
+  revalidatePath(`/tickets/${ticketId}`);
+  return { ok: true as const };
+}
+
+export async function addObservationAction(input: {
+  ticketId: string;
+  content: string;
+}) {
+  const content = input.content.trim();
+  if (!content) {
+    return { ok: false as const, error: "La observación no puede estar vacía." };
+  }
+  const profile = await getCurrentProfile();
+  if (!profile) {
+    return { ok: false as const, error: "Sesión no válida." };
+  }
+  const ticket = await getTicket(input.ticketId);
+  if (!ticket) {
+    return { ok: false as const, error: "Ticket no encontrado." };
+  }
+  await addObservation({
+    ticketId: input.ticketId,
+    content,
+    authorId: profile.id,
+  });
+  revalidatePath("/tickets");
+  revalidatePath(`/tickets/${input.ticketId}`);
   return { ok: true as const };
 }
 

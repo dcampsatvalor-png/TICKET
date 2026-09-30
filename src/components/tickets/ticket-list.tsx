@@ -2,18 +2,28 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Inbox } from "lucide-react";
-import type { AssignmentFilter, StatusFilter, TicketListItem } from "@/types/database";
+import { Inbox, Search } from "lucide-react";
+import type {
+  AssignmentFilter,
+  StatusFilter,
+  TicketListItem,
+  TicketPriority,
+} from "@/types/database";
+import { PRIORITY_LABELS } from "@/types/database";
 import type { PeriodPreset } from "@/lib/analytics/period";
 import { buildTicketsHref } from "@/lib/tickets/query";
-import { RelativeTime, StatusBadge } from "@/components/tickets/status-badge";
+import {
+  PriorityBadge,
+  RelativeTime,
+  StatusBadge,
+} from "@/components/tickets/status-badge";
 import { LoadingOverlay } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "open", label: "Abierto" },
-  { value: "in_progress", label: "En proceso" },
+  { value: "in_progress", label: "En progreso" },
   { value: "resolved", label: "Resuelto" },
   { value: "closed", label: "Cerrado" },
   { value: "cancelled", label: "Anulado" },
@@ -34,6 +44,13 @@ const PERIOD_OPTIONS: { value: PeriodPreset | "all"; label: string }[] = [
   { value: "custom", label: "Personalizado" },
 ];
 
+const PRIORITY_OPTIONS: { value: TicketPriority | "all"; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "high", label: PRIORITY_LABELS.high },
+  { value: "medium", label: PRIORITY_LABELS.medium },
+  { value: "low", label: PRIORITY_LABELS.low },
+];
+
 function FilterChip({
   active,
   href,
@@ -44,14 +61,14 @@ function FilterChip({
   active: boolean;
   href: string;
   disabled?: boolean;
-  onNavigate: (href: string, label: string) => void;
+  onNavigate: (href: string) => void;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       disabled={disabled || active}
-      onClick={() => onNavigate(href, String(children))}
+      onClick={() => onNavigate(href)}
       className={cn(
         "rounded-md px-3 py-1.5 text-sm transition-colors",
         active
@@ -73,6 +90,8 @@ export function TicketFilters({
   desde,
   hasta,
   rangeLabel,
+  q,
+  priority,
 }: {
   status: StatusFilter;
   assignment: AssignmentFilter;
@@ -80,6 +99,8 @@ export function TicketFilters({
   desde: string;
   hasta: string;
   rangeLabel: string | null;
+  q: string;
+  priority: TicketPriority | "all";
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -91,6 +112,8 @@ export function TicketFilters({
     periodo?: PeriodPreset | "all";
     desde?: string;
     hasta?: string;
+    q?: string;
+    priority?: TicketPriority | "all";
   }) {
     return buildTicketsHref({
       status: next.status ?? status,
@@ -98,6 +121,8 @@ export function TicketFilters({
       periodo: next.periodo ?? periodo,
       desde: next.desde ?? desde,
       hasta: next.hasta ?? hasta,
+      q: next.q ?? q,
+      priority: next.priority ?? priority,
     });
   }
 
@@ -111,6 +136,44 @@ export function TicketFilters({
     <>
       {isPending && <LoadingOverlay label={pendingLabel} />}
       <div className="space-y-4">
+        <form
+          className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            onNavigate(hrefFor({ q: String(fd.get("q") || "") }));
+          }}
+        >
+          <label className="relative block min-w-0 flex-1">
+            <span className="sr-only">Buscar</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              name="q"
+              type="search"
+              defaultValue={q}
+              placeholder="Buscar por nº, asunto, correo o texto…"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none ring-teal-600/30 focus:ring-2"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60"
+          >
+            Buscar
+          </button>
+          {q ? (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => onNavigate(hrefFor({ q: "" }))}
+              className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
+            >
+              Limpiar
+            </button>
+          ) : null}
+        </form>
+
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Periodo
@@ -170,13 +233,11 @@ export function TicketFilters({
             </form>
           ) : null}
           {rangeLabel ? (
-            <p className="text-sm text-slate-500">
-              Creadas entre {rangeLabel}
-            </p>
+            <p className="text-sm text-slate-500">Creadas entre {rangeLabel}</p>
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Estado
@@ -187,6 +248,24 @@ export function TicketFilters({
                   key={opt.value}
                   active={status === opt.value}
                   href={hrefFor({ status: opt.value })}
+                  disabled={isPending}
+                  onNavigate={onNavigate}
+                >
+                  {opt.label}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Prioridad
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {PRIORITY_OPTIONS.map((opt) => (
+                <FilterChip
+                  key={opt.value}
+                  active={priority === opt.value}
+                  href={hrefFor({ priority: opt.value })}
                   disabled={isPending}
                   onNavigate={onNavigate}
                 >
@@ -235,8 +314,7 @@ export function TicketList({ tickets }: { tickets: TicketListItem[] }) {
         <Inbox className="mb-3 size-8 text-slate-400" />
         <p className="font-medium text-slate-800">No hay incidencias con estos filtros</p>
         <p className="mt-1 max-w-sm text-sm text-slate-500">
-          Prueba a cambiar el periodo, el estado o la asignación, o espera a que
-          lleguen nuevos correos.
+          Prueba a cambiar la búsqueda, el periodo, el estado o la prioridad.
         </p>
       </div>
     );
@@ -267,6 +345,7 @@ export function TicketList({ tickets }: { tickets: TicketListItem[] }) {
                     #{ticket.ticket_number}
                   </span>
                   <StatusBadge status={ticket.status} />
+                  <PriorityBadge priority={ticket.priority ?? "medium"} />
                 </div>
                 <p className="truncate font-medium text-slate-900">{ticket.subject}</p>
                 <p className="mt-0.5 truncate text-sm text-slate-500">

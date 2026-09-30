@@ -1,6 +1,7 @@
 import { isDemoMode } from "@/lib/env";
 import {
   addDemoComment,
+  addDemoObservation,
   createDemoTicket,
   findDemoTicketByNumber,
   getDemoAgents,
@@ -10,6 +11,7 @@ import {
   listOpenDemoTicketsBySender,
   updateDemoTicketAssignee,
   updateDemoTicketEmailThread,
+  updateDemoTicketPriority,
   updateDemoTicketStatus,
 } from "@/lib/demo/store";
 import {
@@ -27,9 +29,15 @@ import type {
   Ticket,
   TicketComment,
   TicketListItem,
+  TicketObservation,
+  TicketPriority,
   TicketStatus,
   TicketWithRelations,
 } from "@/types/database";
+
+function escapeIlike(term: string): string {
+  return term.replace(/[%_,]/g, (ch) => `\\${ch}`);
+}
 
 function asProfile(row: Record<string, unknown> | Profile): Profile {
   const r = row as Profile & { role?: unknown };
@@ -81,6 +89,8 @@ export async function listTickets(filters: {
   assignment: AssignmentFilter;
   createdFrom?: Date | null;
   createdTo?: Date | null;
+  q?: string | null;
+  priority?: TicketPriority | "all";
 }): Promise<TicketListItem[]> {
   const profile = await getCurrentProfile();
   if (!profile) return [];
@@ -113,16 +123,37 @@ export async function listTickets(filters: {
   } else if (filters.assignment === "unassigned") {
     query = query.is("assigned_to", null).neq("status", "cancelled");
   }
+  if (filters.priority && filters.priority !== "all") {
+    query = query.eq("priority", filters.priority);
+  }
   if (filters.createdFrom) {
     query = query.gte("created_at", filters.createdFrom.toISOString());
   }
   if (filters.createdTo) {
     query = query.lte("created_at", filters.createdTo.toISOString());
   }
+  const q = filters.q?.trim();
+  if (q) {
+    const safe = escapeIlike(q);
+    const bare = q.replace(/^#/, "").trim();
+    const parts = [
+      `subject.ilike.%${safe}%`,
+      `description.ilike.%${safe}%`,
+      `sender_email.ilike.%${safe}%`,
+      `sender_name.ilike.%${safe}%`,
+    ];
+    if (/^\d+$/.test(bare)) {
+      parts.push(`ticket_number.eq.${bare}`);
+    }
+    query = query.or(parts.join(","));
+  }
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as TicketListItem[];
+  return ((data ?? []) as TicketListItem[]).map((t) => ({
+    ...t,
+    priority: t.priority ?? "medium",
+  }));
 }
 
 export async function getTicket(id: string): Promise<TicketWithRelations | null> {
@@ -138,17 +169,32 @@ export async function getTicket(id: string): Promise<TicketWithRelations | null>
   if (error) throw error;
   if (!ticket) return null;
 
-  const { data: comments, error: commentsError } = await supabase
-    .from("ticket_comments")
-    .select("*, author:profiles(*)")
-    .eq("ticket_id", id)
-    .order("created_at", { ascending: true });
+  const [commentsRes, observationsRes] = await Promise.all([
+    supabase
+      .from("ticket_comments")
+      .select("*, author:profiles(*)")
+      .eq("ticket_id", id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("ticket_observations")
+      .select("*, author:profiles(*)")
+      .eq("ticket_id", id)
+      .order("created_at", { ascending: true }),
+  ]);
 
-  if (commentsError) throw commentsError;
+  if (commentsRes.error) throw commentsRes.error;
+  if (observationsRes.error) throw observationsRes.error;
 
+  const row = ticket as Ticket & { assignee: Profile | null };
   return {
-    ...(ticket as Ticket & { assignee: Profile | null }),
-    comments: (comments ?? []) as (TicketComment & { author: Profile | null })[],
+    ...row,
+    priority: row.priority ?? "medium",
+    comments: (commentsRes.data ?? []) as (TicketComment & {
+      author: Profile | null;
+    })[],
+    observations: (observationsRes.data ?? []) as (TicketObservation & {
+      author: Profile | null;
+    })[],
   };
 }
 
@@ -176,6 +222,48 @@ export async function setTicketAssignee(
     .update({ assigned_to: assignedTo })
     .eq("id", id);
   if (error) throw error;
+}
+
+export async function setTicketPriority(
+  id: string,
+  priority: TicketPriority
+): Promise<void> {
+  if (isDemoMode()) {
+    updateDemoTicketPriority(id, priority);
+    return;
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tickets")
+    .update({ priority })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function addObservation(input: {
+  ticketId: string;
+  content: string;
+  authorId: string | null;
+}): Promise<TicketObservation> {
+  if (isDemoMode()) {
+    return addDemoObservation(input);
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ticket_observations")
+    .insert({
+      ticket_id: input.ticketId,
+      content: input.content,
+      author_id: input.authorId,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  await supabase
+    .from("tickets")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", input.ticketId);
+  return data as TicketObservation;
 }
 
 export async function addComment(input: {

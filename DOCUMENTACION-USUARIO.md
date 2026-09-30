@@ -56,6 +56,18 @@ No hace falta pulsar F5. La lista (y el detalle) se **refrescan solos** cada poc
 - Cada línea es una incidencia (`#número`, asunto, remitente, estado, asignado, fecha).
 - Pulsad una línea para abrir el detalle.
 
+### Búsqueda
+
+Caja en la parte superior del listado: busca por **número** (#1001), **asunto**, **correo**, nombre o texto de la descripción.
+
+### Prioridad
+
+Cada incidencia tiene prioridad **Baja**, **Media** o **Alta** (por defecto Media al llegar por correo). Se ve en el listado, se puede filtrar y cambiarse en el detalle.
+
+### Observaciones
+
+En el detalle hay un bloque **Observaciones** solo para el equipo (no se envían al cliente). Sirven para dejar apuntes del caso; son distintas de la respuesta por correo y de la nota interna del hilo.
+
 ### Filtros de periodo
 
 Mismos que en Informes: **Todo**, **Hoy**, **7 días**, **30 días**, **Este mes**, **Personalizado**.
@@ -223,6 +235,7 @@ Solo un administrador puede crear usuarios (correo, contraseña temporal y rol) 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-30 | Búsqueda, prioridad (Baja/Media/Alta) y observaciones en Incidencias |
 | 2026-09-30 | En Incidencias, Todos ya no muestra anuladas (solo filtro Anulado) |
 | 2026-09-30 | Administrador puede reiniciar contraseña desde Usuarios |
 | 2026-09-30 | Roles Administrador / Empleado y pantalla Usuarios |

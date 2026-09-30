@@ -81,6 +81,7 @@ Migraciones:
 | `004_cancelled_status.sql` | `cancelled` en enum |
 | `005_development_requests.sql` | `development_requests`, `development_request_comments` |
 | `006_user_roles.sql` | `profiles.role` (`admin`\|`employee`), trigger `handle_new_user` |
+| `007_priority_and_observations.sql` | `tickets.priority`, tabla `ticket_observations` |
 
 ### Desarrollos (tablas separadas)
 

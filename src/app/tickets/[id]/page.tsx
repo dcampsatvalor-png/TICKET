@@ -25,7 +25,10 @@ export default async function TicketDetailPage({
       <AppHeader profile={profile} />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-4 flex justify-end">
-          <LiveRefresh realtime={!isDemoMode()} />
+          <LiveRefresh
+            realtime={!isDemoMode()}
+            extraTables={["ticket_observations"]}
+          />
         </div>
         <TicketDetail ticket={ticket} agents={agents} />
       </main>

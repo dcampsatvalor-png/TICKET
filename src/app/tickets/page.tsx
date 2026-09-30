@@ -10,7 +10,11 @@ import {
   resolveOptionalDateRange,
   type PeriodPreset,
 } from "@/lib/analytics/period";
-import type { AssignmentFilter, StatusFilter } from "@/types/database";
+import type {
+  AssignmentFilter,
+  StatusFilter,
+  TicketPriority,
+} from "@/types/database";
 import { Suspense } from "react";
 
 function parseStatus(value: string | undefined): StatusFilter {
@@ -46,6 +50,11 @@ function parsePeriodo(value: string | undefined): PeriodPreset | "all" {
   return "all";
 }
 
+function parsePriority(value: string | undefined): TicketPriority | "all" {
+  if (value === "low" || value === "medium" || value === "high") return value;
+  return "all";
+}
+
 export default async function TicketsPage({
   searchParams,
 }: {
@@ -55,6 +64,8 @@ export default async function TicketsPage({
     periodo?: string;
     desde?: string;
     hasta?: string;
+    q?: string;
+    priority?: string;
   }>;
 }) {
   const profile = await getCurrentProfile();
@@ -66,6 +77,8 @@ export default async function TicketsPage({
   const status = parseStatus(params.status);
   const assignment = parseAssignment(params.assignment);
   const periodo = parsePeriodo(params.periodo);
+  const priority = parsePriority(params.priority);
+  const q = (params.q ?? "").trim();
   const range = resolveOptionalDateRange({
     preset: periodo,
     from: params.desde,
@@ -80,6 +93,8 @@ export default async function TicketsPage({
     assignment,
     createdFrom: range?.from ?? null,
     createdTo: range?.to ?? null,
+    q,
+    priority,
   });
   const liveRealtime = !isDemoMode();
 
@@ -96,7 +111,10 @@ export default async function TicketsPage({
               Gestiona incidencias entrantes por correo y responde desde el panel.
             </p>
           </div>
-          <LiveRefresh realtime={liveRealtime} />
+          <LiveRefresh
+            realtime={liveRealtime}
+            extraTables={["ticket_observations"]}
+          />
         </div>
 
         <div className="mb-6">
@@ -108,6 +126,8 @@ export default async function TicketsPage({
               desde={desde}
               hasta={hasta}
               rangeLabel={rangeLabel}
+              q={q}
+              priority={priority}
             />
           </Suspense>
         </div>

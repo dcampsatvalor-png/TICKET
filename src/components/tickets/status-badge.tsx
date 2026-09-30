@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import type { TicketStatus } from "@/types/database";
-import { STATUS_LABELS } from "@/types/database";
+import type { TicketPriority, TicketStatus } from "@/types/database";
+import { PRIORITY_LABELS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -13,7 +13,13 @@ const STATUS_STYLES: Record<TicketStatus, string> = {
   cancelled: "bg-red-100 text-red-800 border-red-300",
 };
 
-export { STATUS_STYLES };
+const PRIORITY_STYLES: Record<TicketPriority, string> = {
+  low: "bg-slate-100 text-slate-700 border-slate-200",
+  medium: "bg-indigo-100 text-indigo-900 border-indigo-200",
+  high: "bg-orange-100 text-orange-900 border-orange-300",
+};
+
+export { STATUS_STYLES, PRIORITY_STYLES };
 
 export function StatusBadge({ status }: { status: TicketStatus }) {
   return (
@@ -22,6 +28,17 @@ export function StatusBadge({ status }: { status: TicketStatus }) {
       className={cn("rounded-md font-medium", STATUS_STYLES[status])}
     >
       {STATUS_LABELS[status]}
+    </Badge>
+  );
+}
+
+export function PriorityBadge({ priority }: { priority: TicketPriority }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn("rounded-md font-medium", PRIORITY_STYLES[priority])}
+    >
+      {PRIORITY_LABELS[priority]}
     </Badge>
   );
 }

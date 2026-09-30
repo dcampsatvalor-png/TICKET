@@ -40,6 +40,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-30 | Incidencias: búsqueda, prioridad y observaciones |
 | 2026-09-30 | Listado Todos oculta incidencias Anuladas |
 | 2026-09-30 | Admin: reiniciar contraseña de usuarios |
 | 2026-09-30 | Roles admin/empleado + pantalla Usuarios |

@@ -5,6 +5,8 @@ import type {
   Ticket,
   TicketComment,
   TicketListItem,
+  TicketObservation,
+  TicketPriority,
   TicketStatus,
   TicketWithRelations,
 } from "@/types/database";
@@ -35,6 +37,7 @@ type DemoStore = {
   profiles: Profile[];
   tickets: Ticket[];
   comments: TicketComment[];
+  observations: TicketObservation[];
   nextTicketNumber: number;
 };
 
@@ -53,6 +56,7 @@ function seedStore(): DemoStore {
       sender_email: "laura.garcia@cliente.com",
       sender_name: "Laura García",
       status: "open",
+      priority: "high",
       assigned_to: null,
       created_at: hoursAgo(5),
       updated_at: hoursAgo(5),
@@ -66,6 +70,7 @@ function seedStore(): DemoStore {
       sender_email: "miguel.ortega@cliente.com",
       sender_name: "Miguel Ortega",
       status: "in_progress",
+      priority: "high",
       assigned_to: "demo-agent-1",
       created_at: hoursAgo(26),
       updated_at: hoursAgo(3),
@@ -79,6 +84,7 @@ function seedStore(): DemoStore {
       sender_email: "recepcion@cliente.com",
       sender_name: "Recepción",
       status: "resolved",
+      priority: "medium",
       assigned_to: "demo-agent-2",
       created_at: hoursAgo(72),
       updated_at: hoursAgo(12),
@@ -91,6 +97,7 @@ function seedStore(): DemoStore {
       sender_email: "sofia.lopez@cliente.com",
       sender_name: "Sofía López",
       status: "resolved",
+      priority: "medium",
       assigned_to: "demo-agent-1",
       created_at: hoursAgo(96),
       updated_at: hoursAgo(90),
@@ -103,6 +110,7 @@ function seedStore(): DemoStore {
       sender_email: "jorge.navarro@cliente.com",
       sender_name: "Jorge Navarro",
       status: "closed",
+      priority: "low",
       assigned_to: "demo-agent-2",
       created_at: hoursAgo(140),
       updated_at: hoursAgo(120),
@@ -115,6 +123,7 @@ function seedStore(): DemoStore {
       sender_email: "marta.ruiz@cliente.com",
       sender_name: "Marta Ruiz",
       status: "resolved",
+      priority: "low",
       assigned_to: "demo-agent-1",
       created_at: hoursAgo(200),
       updated_at: hoursAgo(180),
@@ -127,6 +136,7 @@ function seedStore(): DemoStore {
       sender_email: "pedro.gil@cliente.com",
       sender_name: "Pedro Gil",
       status: "cancelled",
+      priority: "low",
       assigned_to: "demo-agent-2",
       created_at: hoursAgo(48),
       updated_at: hoursAgo(40),
@@ -139,6 +149,7 @@ function seedStore(): DemoStore {
       sender_email: "elena.diaz@cliente.com",
       sender_name: "Elena Díaz",
       status: "in_progress",
+      priority: "medium",
       assigned_to: "demo-agent-1",
       created_at: hoursAgo(10),
       updated_at: hoursAgo(2),
@@ -174,10 +185,21 @@ function seedStore(): DemoStore {
     },
   ];
 
+  const observations: TicketObservation[] = [
+    {
+      id: "demo-obs-1",
+      ticket_id: "demo-ticket-1",
+      author_id: "demo-agent-1",
+      content: "El usuario confirma que el fallo empezó tras actualizar el cliente VPN.",
+      created_at: hoursAgo(4),
+    },
+  ];
+
   return {
     profiles: DEMO_AGENTS,
     tickets,
     comments,
+    observations,
     nextTicketNumber: 1009,
   };
 }
@@ -234,16 +256,35 @@ export function updateDemoUserRole(
   return profile;
 }
 
+function ticketMatchesSearch(ticket: Ticket, q: string): boolean {
+  const term = q.trim().toLowerCase();
+  if (!term) return true;
+  const bare = term.replace(/^#/, "");
+  if (/^\d+$/.test(bare) && String(ticket.ticket_number) === bare) return true;
+  return (
+    ticket.subject.toLowerCase().includes(term) ||
+    ticket.description.toLowerCase().includes(term) ||
+    ticket.sender_email.toLowerCase().includes(term) ||
+    (ticket.sender_name?.toLowerCase().includes(term) ?? false) ||
+    String(ticket.ticket_number).includes(bare)
+  );
+}
+
 export function listDemoTickets(filters: {
   status: StatusFilter;
   assignment: AssignmentFilter;
   currentUserId: string;
   createdFrom?: Date | null;
   createdTo?: Date | null;
+  q?: string | null;
+  priority?: TicketPriority | "all";
 }): TicketListItem[] {
   const store = getStore();
+  const priority = filters.priority ?? "all";
   return store.tickets
     .filter((t) => ticketMatchesStatusFilter(t.status, filters.status))
+    .filter((t) => priority === "all" || (t.priority ?? "medium") === priority)
+    .filter((t) => ticketMatchesSearch(t, filters.q ?? ""))
     .filter((t) => {
       if (filters.assignment === "mine") return t.assigned_to === filters.currentUserId;
       if (filters.assignment === "unassigned") {
@@ -260,6 +301,7 @@ export function listDemoTickets(filters: {
     .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
     .map((ticket) => ({
       ...ticket,
+      priority: ticket.priority ?? "medium",
       assignee: store.profiles.find((p) => p.id === ticket.assigned_to) ?? null,
     }));
 }
@@ -270,6 +312,7 @@ export function getDemoTicket(id: string): TicketWithRelations | null {
   if (!ticket) return null;
   return {
     ...ticket,
+    priority: ticket.priority ?? "medium",
     assignee: store.profiles.find((p) => p.id === ticket.assigned_to) ?? null,
     comments: store.comments
       .filter((c) => c.ticket_id === id)
@@ -278,7 +321,45 @@ export function getDemoTicket(id: string): TicketWithRelations | null {
         ...c,
         author: store.profiles.find((p) => p.id === c.author_id) ?? null,
       })),
+    observations: (store.observations ?? [])
+      .filter((o) => o.ticket_id === id)
+      .sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at))
+      .map((o) => ({
+        ...o,
+        author: store.profiles.find((p) => p.id === o.author_id) ?? null,
+      })),
   };
+}
+
+export function updateDemoTicketPriority(
+  id: string,
+  priority: TicketPriority
+): void {
+  const ticket = getStore().tickets.find((t) => t.id === id);
+  if (ticket) {
+    ticket.priority = priority;
+    ticket.updated_at = new Date().toISOString();
+  }
+}
+
+export function addDemoObservation(input: {
+  ticketId: string;
+  authorId: string | null;
+  content: string;
+}): TicketObservation {
+  const store = getStore();
+  if (!store.observations) store.observations = [];
+  const observation: TicketObservation = {
+    id: `demo-obs-${crypto.randomUUID()}`,
+    ticket_id: input.ticketId,
+    author_id: input.authorId,
+    content: input.content,
+    created_at: new Date().toISOString(),
+  };
+  store.observations.push(observation);
+  const ticket = store.tickets.find((t) => t.id === input.ticketId);
+  if (ticket) ticket.updated_at = observation.created_at;
+  return observation;
 }
 
 export function updateDemoTicketEmailThread(
@@ -365,6 +446,7 @@ export function createDemoTicket(input: {
     sender_email: input.senderEmail,
     sender_name: input.senderName,
     status: "open",
+    priority: "medium",
     assigned_to: null,
     created_at: now,
     updated_at: now,

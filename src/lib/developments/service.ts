@@ -63,7 +63,9 @@ export async function listDevelopmentRequests(filters: {
     query = query.in("status", ["open", "in_progress"]);
   } else if (filters.status === "done") {
     query = query.in("status", ["resolved", "closed"]);
-  } else if (filters.status !== "all") {
+  } else if (filters.status === "all") {
+    query = query.neq("status", "cancelled");
+  } else {
     query = query.eq("status", filters.status);
   }
   if (filters.assignment === "mine") {
