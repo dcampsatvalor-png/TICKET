@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Headset } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { BrandLogo } from "@/components/brand/logo";
 import { isDemoMode } from "@/lib/env";
 import type { Profile } from "@/types/database";
 
@@ -16,16 +16,20 @@ export function AppHeader({
   return (
     <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex items-center gap-6">
-          <Link href="/tickets" className="flex items-center gap-2.5 group">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-teal-600 text-white shadow-sm shadow-teal-600/20 transition group-hover:bg-teal-700">
-              <Headset className="size-4" />
-            </span>
-            <div className="leading-tight">
+        <div className="flex min-w-0 items-center gap-4 sm:gap-6">
+          <Link
+            href="/tickets"
+            className="flex min-w-0 items-center gap-2.5 group"
+            aria-label="SOPORTE IT · Tasaciones Hipotecarias"
+          >
+            <BrandLogo variant="mark" className="h-7 shrink-0 sm:h-8" priority />
+            <div className="min-w-0 leading-tight">
               <p className="font-heading text-sm font-semibold tracking-tight text-slate-900">
                 SOPORTE IT
               </p>
-              <p className="text-[11px] text-slate-500">TASACIONES HIPOTECARIAS</p>
+              <p className="truncate text-[11px] text-slate-500">
+                TASACIONES HIPOTECARIAS
+              </p>
             </div>
           </Link>
 
@@ -63,7 +67,7 @@ export function AppHeader({
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           {demo && (
             <span className="hidden sm:inline rounded-md border border-teal-200 bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-800">
               Modo demo

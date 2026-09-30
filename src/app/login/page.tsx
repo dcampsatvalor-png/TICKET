@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
+import { BrandLogo } from "@/components/brand/logo";
 import { isDemoMode } from "@/lib/env";
-import { Headset } from "lucide-react";
 
 export default async function LoginPage({
   searchParams,
@@ -27,14 +27,16 @@ export default async function LoginPage({
       />
 
       <div className="relative w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-teal-600 text-white shadow-lg shadow-teal-600/25">
-            <Headset className="size-6" />
-          </div>
+        <div className="mb-8 flex flex-col items-center text-center">
+          <BrandLogo
+            variant="full"
+            priority
+            className="mb-5 h-16 w-auto sm:h-20"
+          />
           <h1 className="font-heading text-3xl font-semibold tracking-tight text-slate-900">
             SOPORTE IT
           </h1>
-          <p className="mt-2 text-slate-600">TASACIONES HIPOTECARIAS</p>
+          <p className="mt-2 text-slate-600">Panel interno de incidencias y desarrollos</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-xl shadow-slate-300/30 backdrop-blur">
@@ -46,8 +48,11 @@ export default async function LoginPage({
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          <Link href="/tickets" className="text-teal-700 underline-offset-2 hover:underline">
-            Ir a tickets
+          <Link
+            href="/tickets"
+            className="text-teal-700 underline-offset-2 hover:underline"
+          >
+            Ir a incidencias
           </Link>
         </p>
       </div>

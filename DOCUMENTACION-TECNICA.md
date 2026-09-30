@@ -42,6 +42,7 @@ src/
     tickets/               # list, detail, status-badge
     developments/          # list, detail (desarrollos)
     layout/app-header.tsx
+    brand/logo.tsx           # BrandLogo (mark / full)
   lib/
     analytics/             # period.ts, service.ts
     tickets/service.ts
@@ -53,6 +54,10 @@ src/
   types/database.ts
   proxy.ts                 # session gate
 supabase/migrations/
+public/
+  logo-th.png              # logo completo (fondo transparente)
+  logo-th-mark.png         # solo marca gráfica
+src/app/icon.png           # favicon generado desde la marca
 .cursor/rules/documentacion.mdc
 ```
 

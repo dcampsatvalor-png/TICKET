@@ -208,6 +208,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-30 | Logo de Tasaciones Hipotecarias en cabecera y login |
 | 2026-09-29 | Desarrollos: solo remitentes dcamps@grupoatvalor.com y d.camps@tasacioneshipotecarias.com |
 | 2026-09-29 | Orden menú Incidencias → Desarrollos → Reportes; Reportes con pestañas |
 | 2026-09-29 | Menú renombrado a **Incidencias** y **Reportes**; Reportes incluye métricas de Desarrollos |

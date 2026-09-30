@@ -39,6 +39,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-30 | Logo Tasaciones Hipotecarias en header, login e icono |
 | 2026-09-29 | Desarrollos: allowlist remitentes (dcamps@ / d.camps@) |
 | 2026-09-29 | Menú: Incidencias → Desarrollos → Reportes; Reportes con pestañas Incidencias/Desarrollos |
 | 2026-09-29 | Menú: **Incidencias** / **Reportes** / Desarrollos; Reportes incluye bloque Desarrollos |
