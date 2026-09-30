@@ -145,7 +145,7 @@ El periodo se comparte al cambiar de pestaña. En cada vista:
 - Cómo están **ahora** (Abierto, En progreso, Resuelto, Cerrado, Anulado), con colores.
 - Cuántas de las creadas están **sin asignar** (sin contar anuladas).
 - Media de altas por día.
-- Tabla **por agente**: asignadas, resueltas ahora, activas.
+- Tabla **por agente**: asignadas, resueltas ahora, activas. **Solo aparecen usuarios con rol Empleado**; los **Administradores no salen** en ese desglose (sí cuentan en los totales y por estado si tienen tickets asignados).
 
 ### Cómo leer los números
 
@@ -222,8 +222,8 @@ Hay dos roles en el panel:
 
 | Rol | Qué puede hacer |
 |---|---|
-| **Empleado** | Incidencias, Desarrollos y Reportes |
-| **Administrador** | Lo mismo + pantalla **Usuarios** (crear cuentas y cambiar roles) |
+| **Empleado** | Incidencias, Desarrollos y Reportes; aparece en la tabla **Por agente** de Reportes |
+| **Administrador** | Lo mismo + pantalla **Usuarios** (crear cuentas y cambiar roles); **no** aparece en Por agente de Reportes |
 
 Solo un administrador puede crear usuarios (correo, contraseña temporal y rol) y **reiniciar la contraseña** de cualquier usuario desde la tabla. La primera vez hay que ejecutar en Supabase la migración de roles (`006_user_roles.sql`); si nadie queda como admin, un técnico puede hacer:
 
@@ -235,6 +235,7 @@ Solo un administrador puede crear usuarios (correo, contraseña temporal y rol) 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-30 | En Reportes, la tabla Por agente solo muestra empleados (no administradores) |
 | 2026-09-30 | Búsqueda, prioridad (Baja/Media/Alta) y observaciones en Incidencias |
 | 2026-09-30 | En Incidencias, Todos ya no muestra anuladas (solo filtro Anulado) |
 | 2026-09-30 | Administrador puede reiniciar contraseña desde Usuarios |

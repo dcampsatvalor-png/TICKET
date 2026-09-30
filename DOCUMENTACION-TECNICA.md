@@ -115,6 +115,7 @@ En analytics y listados:
 - Listado `status=all` (chip Todos) → excluye `cancelled`; ver anuladas solo con `status=cancelled`
 - KPI Informes `unassignedCreated` igual
 - Tabla por agente: tickets cancelados sin assignee **no** inflan la fila «Sin asignar»
+- Tabla por agente: solo perfiles con `role = 'employee'`; asignaciones a `admin` se omiten del desglose (siguen en totales / por estado)
 
 Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo/store.ts`.
 
@@ -146,6 +147,7 @@ Reportes (`lib/analytics` + `reports-view.tsx`):
 - Periodo: hoy / 7d / 30d / mes / custom (`period.ts`, TZ Europe/Madrid para claves de día).
 - Pestañas Incidencias / Desarrollos (misma lógica de KPIs; query `vista`).
 - KPIs = **estado actual** de ítems con `created_at` en rango.
+- `byAgent` en `buildAnalytics`: filtra `agents` a `role === "employee"`; no crea filas para administradores.
 - Cards de estado usan `STATUS_STYLES` de `status-badge.tsx`.
 - Clic → `/tickets?…` o `/desarrollos?…` con status/assignment/periodo.
 
@@ -228,6 +230,7 @@ npm run typecheck
 
 | Fecha / commit | Cambio |
 |---|---|
+| 2026-09-30 | Reportes `byAgent`: solo `role=employee`; omitir asignaciones a admin |
 | 2026-09-24 | Filtro de periodo en Tickets sincronizado con Informes KPI deep-links |
 | 2026-09-24 | Ignorar ecos outbound del helpdesk; `[Ticket #N]` en asunto/cuerpo; Message-ID normalizado |
 | 2026-09-24 | `LiveRefresh`: polling + Realtime opcional en `/tickets` y detalle |

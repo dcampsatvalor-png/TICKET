@@ -78,6 +78,10 @@ function buildAnalytics(
     Math.round((range.to.getTime() - range.from.getTime()) / 86400000) + 1
   );
 
+  // Reportes "Por agente": solo rol empleado (los administradores no salen)
+  const employeeAgents = agents.filter((a) => a.role === "employee");
+  const employeeIds = new Set(employeeAgents.map((a) => a.id));
+
   const agentMap = new Map<string | null, AgentAnalyticsRow>();
   agentMap.set(null, {
     agentId: null,
@@ -86,7 +90,7 @@ function buildAnalytics(
     resolved: 0,
     active: 0,
   });
-  for (const agent of agents) {
+  for (const agent of employeeAgents) {
     agentMap.set(agent.id, {
       agentId: agent.id,
       agentName: agent.full_name,
@@ -99,6 +103,9 @@ function buildAnalytics(
   for (const t of createdInRange) {
     // Cancelled + unassigned should not inflate the "Sin asignar" bucket
     if (!t.assigned_to && t.status === "cancelled") continue;
+
+    // Asignadas a administrador (u otro no-empleado) no entran en la tabla por agente
+    if (t.assigned_to && !employeeIds.has(t.assigned_to)) continue;
 
     const id = t.assigned_to;
     const row =

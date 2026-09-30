@@ -7,7 +7,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 | **[DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)** | Agentes IT y uso diario del panel (estados, filtros, Informes, reglas de negocio en lenguaje claro) |
 | **[DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)** | Desarrollo, arquitectura, correo, BD, variables, historial de commits |
 
-Última actualización: 2026-09-29
+Última actualización: 2026-09-30
 
 ---
 
@@ -22,6 +22,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 - Responder desde el panel **no debe crear otro ticket** (se ignora el eco del correo de `incidencias@`).
 - Periodo de Informes y Tickets **sincronizado** (Hoy, 7 días, etc. al pulsar un KPI).
 - Roles: **Administrador** (gestiona usuarios) y **Empleado** (operativa del panel).
+- En **Reportes → Por agente** solo salen **empleados**; los administradores no aparecen en ese desglose.
 
 Detalle para usuarios → [DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)  
 Detalle técnico → [DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)  
@@ -40,6 +41,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-30 | Reportes: Por agente solo empleados (sin administradores) |
 | 2026-09-30 | Incidencias: búsqueda, prioridad y observaciones |
 | 2026-09-30 | Listado Todos oculta incidencias Anuladas |
 | 2026-09-30 | Admin: reiniciar contraseña de usuarios |
