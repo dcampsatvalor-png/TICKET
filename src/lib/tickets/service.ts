@@ -102,7 +102,10 @@ export async function listTickets(filters: {
     query = query.in("status", ["open", "in_progress"]);
   } else if (filters.status === "done") {
     query = query.in("status", ["resolved", "closed"]);
-  } else if (filters.status !== "all") {
+  } else if (filters.status === "all") {
+    // "Todos" no incluye anuladas; hay que filtrar por Anulado para verlas.
+    query = query.neq("status", "cancelled");
+  } else {
     query = query.eq("status", filters.status);
   }
   if (filters.assignment === "mine") {

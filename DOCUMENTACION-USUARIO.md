@@ -66,7 +66,7 @@ Filtran por fecha de **creación** del ticket. Si entráis desde Informes pulsan
 
 | Filtro | Significado |
 |---|---|
-| Todos | Todas las incidencias |
+| Todos | Todas excepto **Anulado** (las anuladas solo con el filtro Anulado) |
 | Abierto | Pendientes de empezar / recién llegadas |
 | En proceso | Alguien está trabajando en ellas |
 | Resuelto | Solucionadas (aún visibles como resueltas) |
@@ -96,7 +96,7 @@ Filtran por fecha de **creación** del ticket. Si entráis desde Informes pulsan
 ### Reglas importantes (negocio)
 
 1. **Anulado ≠ pendiente**  
-   Una incidencia **Anulada** **no** cuenta como “Sin asignar” ni como trabajo pendiente de asignar, aunque no tenga agente. Solo aparece en el contador / filtro de **Anulado**.
+   Una incidencia **Anulada** **no** cuenta como “Sin asignar” ni como trabajo pendiente de asignar, aunque no tenga agente. **No aparece en el listado Todos**; solo si filtráis por **Anulado** (también en Reportes).
 
 2. **Resuelto vs Cerrado**  
    - Resuelto = hecha la solución.  
@@ -223,6 +223,7 @@ Solo un administrador puede crear usuarios (correo, contraseña temporal y rol) 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-30 | En Incidencias, Todos ya no muestra anuladas (solo filtro Anulado) |
 | 2026-09-30 | Administrador puede reiniciar contraseña desde Usuarios |
 | 2026-09-30 | Roles Administrador / Empleado y pantalla Usuarios |
 | 2026-09-30 | Logo de Tasaciones Hipotecarias en cabecera y login |

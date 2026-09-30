@@ -111,6 +111,7 @@ Helper: `ticketMatchesStatusFilter` en `types/database.ts`.
 En analytics y listados:
 
 - `assignment=unassigned` → `assigned_to IS NULL` **AND** `status <> 'cancelled'`
+- Listado `status=all` (chip Todos) → excluye `cancelled`; ver anuladas solo con `status=cancelled`
 - KPI Informes `unassignedCreated` igual
 - Tabla por agente: tickets cancelados sin assignee **no** inflan la fila «Sin asignar»
 

@@ -76,7 +76,8 @@ export function ticketMatchesStatusFilter(
   status: TicketStatus,
   filter: StatusFilter
 ): boolean {
-  if (filter === "all") return true;
+  // "Todos" oculta anuladas; solo el filtro Anulado las muestra.
+  if (filter === "all") return status !== "cancelled";
   if (filter === "active") return status === "open" || status === "in_progress";
   if (filter === "done") return status === "resolved" || status === "closed";
   return status === filter;
