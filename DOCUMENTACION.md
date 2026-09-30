@@ -41,6 +41,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-30 | Desarrollos: LoadingOverlay en navegación y acciones |
 | 2026-09-30 | Reportes: Por agente solo empleados (sin administradores) |
 | 2026-09-30 | Incidencias: búsqueda, prioridad y observaciones |
 | 2026-09-30 | Listado Todos oculta incidencias Anuladas |

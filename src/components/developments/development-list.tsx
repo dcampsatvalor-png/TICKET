@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Lightbulb } from "lucide-react";
@@ -124,7 +123,8 @@ export function DevelopmentFilters({
               </label>
               <button
                 type="submit"
-                className="rounded-lg bg-violet-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-800"
+                disabled={isPending}
+                className="rounded-lg bg-violet-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-800 disabled:opacity-60"
               >
                 Aplicar
               </button>
@@ -168,6 +168,15 @@ export function DevelopmentList({
 }: {
   requests: DevelopmentRequestListItem[];
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function openRequest(id: string) {
+    startTransition(() => {
+      router.push(`/desarrollos/${id}`);
+    });
+  }
+
   if (requests.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-violet-200 bg-white/60 px-6 py-16 text-center">
@@ -182,43 +191,48 @@ export function DevelopmentList({
   }
 
   return (
-    <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50">
-      {requests.map((req, index) => (
-        <li
-          key={req.id}
-          className="animate-in fade-in slide-in-from-bottom-1"
-          style={{
-            animationDelay: `${Math.min(index, 8) * 40}ms`,
-            animationFillMode: "both",
-          }}
-        >
-          <Link
-            href={`/desarrollos/${req.id}`}
-            className="flex w-full flex-col gap-2 px-4 py-3.5 text-left transition-colors hover:bg-violet-50/40 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
+    <>
+      {isPending && <LoadingOverlay label="Abriendo desarrollo…" />}
+      <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50">
+        {requests.map((req, index) => (
+          <li
+            key={req.id}
+            className="animate-in fade-in slide-in-from-bottom-1"
+            style={{
+              animationDelay: `${Math.min(index, 8) * 40}ms`,
+              animationFillMode: "both",
+            }}
           >
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex flex-wrap items-center gap-2">
-                <span className="font-mono text-xs text-violet-600">
-                  D#{req.request_number}
-                </span>
-                <StatusBadge status={req.status} />
+            <button
+              type="button"
+              onClick={() => openRequest(req.id)}
+              disabled={isPending}
+              className="flex w-full flex-col gap-2 px-4 py-3.5 text-left transition-colors hover:bg-violet-50/40 disabled:cursor-wait sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-xs text-violet-600">
+                    D#{req.request_number}
+                  </span>
+                  <StatusBadge status={req.status} />
+                </div>
+                <p className="truncate font-medium text-slate-900">{req.subject}</p>
+                <p className="mt-0.5 truncate text-sm text-slate-500">
+                  {req.sender_name
+                    ? `${req.sender_name} · ${req.sender_email}`
+                    : req.sender_email}
+                </p>
               </div>
-              <p className="truncate font-medium text-slate-900">{req.subject}</p>
-              <p className="mt-0.5 truncate text-sm text-slate-500">
-                {req.sender_name
-                  ? `${req.sender_name} · ${req.sender_email}`
-                  : req.sender_email}
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-4 text-sm">
-              <span className="hidden text-slate-500 sm:inline">
-                {req.assignee?.full_name ?? "Sin asignar"}
-              </span>
-              <RelativeTime date={req.updated_at} />
-            </div>
-          </Link>
-        </li>
-      ))}
-    </ul>
+              <div className="flex shrink-0 items-center gap-4 text-sm">
+                <span className="hidden text-slate-500 sm:inline">
+                  {req.assignee?.full_name ?? "Sin asignar"}
+                </span>
+                <RelativeTime date={req.updated_at} />
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

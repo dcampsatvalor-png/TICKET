@@ -126,13 +126,7 @@ export default async function DesarrollosPage({
           </Suspense>
         </div>
 
-        <Suspense
-          fallback={
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500">
-              Cargando peticiones…
-            </div>
-          }
-        >
+        <Suspense fallback={null}>
           <DevelopmentList requests={requests} />
         </Suspense>
       </main>

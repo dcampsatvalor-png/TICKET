@@ -180,6 +180,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 - Detalle con cronología, asignación, notas internas y **respuesta pública** al solicitante.
 - Las respuestas salen desde **desarrollos@…** con `[Desarrollo #N]` en el asunto para mantener el hilo.
 - **Actualización automática** igual que en Incidencias.
+- Pantalla de carga (overlay) al filtrar, abrir una petición, cambiar estado/asignación, responder o volver al listado — igual que en Incidencias.
 
 ### Diferencia con Incidencias
 
@@ -235,6 +236,7 @@ Solo un administrador puede crear usuarios (correo, contraseña temporal y rol) 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-30 | Desarrollos: pantalla de carga al navegar y al guardar cambios (como Incidencias) |
 | 2026-09-30 | En Reportes, la tabla Por agente solo muestra empleados (no administradores) |
 | 2026-09-30 | Búsqueda, prioridad (Baja/Media/Alta) y observaciones en Incidencias |
 | 2026-09-30 | En Incidencias, Todos ya no muestra anuladas (solo filtro Anulado) |

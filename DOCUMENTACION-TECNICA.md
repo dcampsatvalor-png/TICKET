@@ -128,13 +128,15 @@ Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo
 | `/login` | Auth |
 | `/tickets` | UI **Incidencias** — listado + filtros + **LiveRefresh** |
 | `/tickets/[id]` | Detalle incidencia + **LiveRefresh** |
-| `/admin` | UI **Usuarios** (solo `role=admin`): alta y cambio de rol |
+| `/admin` | UI **Usuarios** (solo `role=admin`): alta y cambio de rol + `loading.tsx` |
 | `/informes` | UI **Reportes** — pestañas `vista=incidencias\|desarrollos` + periodo + KPIs |
-| `/desarrollos` | Listado peticiones desarrollo + filtros periodo/estado + **LiveRefresh** |
-| `/desarrollos/[id]` | Detalle + **LiveRefresh** |
+| `/desarrollos` | Listado peticiones desarrollo + filtros periodo/estado + **LiveRefresh** + `loading.tsx` |
+| `/desarrollos/[id]` | Detalle + **LiveRefresh** + `loading.tsx` |
 | `POST /api/webhooks/resend` | Inbound (JSON incluye `mailbox`: `support` \| `development`) |
 
 Query compartida: `lib/tickets/query.ts` (`buildTicketsHref`) y `lib/developments/query.ts` (`buildDesarrollosHref`). Los KPI de Reportes pasan `periodo`/`desde`/`hasta` al listado. Analytics: `getTicketAnalytics` + `getDevelopmentAnalytics` en `lib/analytics/service.ts`.
+
+Pantallas de carga: `app/*/loading.tsx` (tickets, desarrollos, informes, login, admin) muestran `LoadingOverlay`. En cliente, filtros/listados/detalle usan `useTransition` + `LoadingOverlay` al navegar o guardar (Incidencias y Desarrollos).
 
 ### Actualización en vivo (`components/live-refresh.tsx`)
 
@@ -230,6 +232,7 @@ npm run typecheck
 
 | Fecha / commit | Cambio |
 |---|---|
+| 2026-09-30 | Desarrollos/admin: `loading.tsx` + overlay al abrir fila; detalle con overlay en acciones |
 | 2026-09-30 | Reportes `byAgent`: solo `role=employee`; omitir asignaciones a admin |
 | 2026-09-24 | Filtro de periodo en Tickets sincronizado con Informes KPI deep-links |
 | 2026-09-24 | Ignorar ecos outbound del helpdesk; `[Ticket #N]` en asunto/cuerpo; Message-ID normalizado |

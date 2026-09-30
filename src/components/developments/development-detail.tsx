@@ -27,7 +27,6 @@ import {
 import { LoadingOverlay, Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Lock, Mail, MessageSquare } from "lucide-react";
-import Link from "next/link";
 
 export function DevelopmentDetail({
   request,
@@ -117,17 +116,26 @@ export function DevelopmentDetail({
     })),
   ];
 
+  function goBack() {
+    setPendingLabel("Volviendo a desarrollos…");
+    startTransition(() => {
+      router.push("/desarrollos");
+    });
+  }
+
   return (
     <div className="relative space-y-8">
       {isPending && <LoadingOverlay label={pendingLabel} />}
       <div className="space-y-4">
-        <Link
-          href="/desarrollos"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-800"
+        <button
+          type="button"
+          onClick={goBack}
+          disabled={isPending}
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-800 disabled:cursor-wait"
         >
           <ArrowLeft className="size-3.5" />
           Volver a desarrollos
-        </Link>
+        </button>
 
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
