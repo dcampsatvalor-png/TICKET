@@ -21,6 +21,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 - La pantalla **Tickets** (y el detalle) se **actualiza sola**; no hace falta F5.
 - Responder desde el panel **no debe crear otro ticket** (se ignora el eco del correo de `incidencias@`).
 - Periodo de Informes y Tickets **sincronizado** (Hoy, 7 días, etc. al pulsar un KPI).
+- Roles: **Administrador** (gestiona usuarios) y **Empleado** (operativa del panel).
 
 Detalle para usuarios → [DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)  
 Detalle técnico → [DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)  
@@ -39,6 +40,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-30 | Roles admin/empleado + pantalla Usuarios |
 | 2026-09-30 | Logo Tasaciones Hipotecarias en header, login e icono |
 | 2026-09-29 | Desarrollos: allowlist remitentes (dcamps@ / d.camps@) |
 | 2026-09-29 | Menú: Incidencias → Desarrollos → Reportes; Reportes con pestañas Incidencias/Desarrollos |

@@ -67,7 +67,8 @@ Si el proyecto aún no tiene repo GitHub propio, en Cursor usa **Create repo** y
 1. Crea cuenta/proyecto en [supabase.com](https://supabase.com).
 2. SQL Editor → pega y ejecuta `supabase/migrations/001_helpdesk_schema.sql` (y `002` / `003` si aún no).
 3. Authentication → Providers → Email habilitado.
-4. Crea **2 usuarios** (los informáticos) en Authentication → Users.
+4. Ejecuta también `006_user_roles.sql` (columna `role`). Crea usuarios en Authentication → Users **o** desde el panel **Usuarios** (hace falta al menos un admin).
+   Para promover a admin: `update public.profiles set role = 'admin' where email = '...';`
 5. Settings → API: copia
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

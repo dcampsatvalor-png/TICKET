@@ -25,7 +25,7 @@ URL de producción (orientativa): `https://ticket-yuwb.vercel.app`
 
 1. Abrir la URL del panel.
 2. Ir a **Login** con el usuario y contraseña que os hayan creado (cuenta de agente).
-3. Tras entrar veréis el menú: **Incidencias** | **Desarrollos** | **Reportes**.
+3. Tras entrar veréis el menú: **Incidencias** | **Desarrollos** | **Reportes** (y **Usuarios** si sois administrador).
 
 Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 
@@ -204,10 +204,26 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 
 ---
 
-## 11. Historial de cambios (vista usuario)
+## 11. Usuarios y roles
+
+Hay dos roles en el panel:
+
+| Rol | Qué puede hacer |
+|---|---|
+| **Empleado** | Incidencias, Desarrollos y Reportes |
+| **Administrador** | Lo mismo + pantalla **Usuarios** (crear cuentas y cambiar roles) |
+
+Solo un administrador puede crear usuarios (correo, contraseña temporal y rol). La primera vez hay que ejecutar en Supabase la migración de roles (`006_user_roles.sql`); si nadie queda como admin, un técnico puede hacer:
+
+`update public.profiles set role = 'admin' where email = 'tu@correo.com';`
+
+---
+
+## 12. Historial de cambios (vista usuario)
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-30 | Roles Administrador / Empleado y pantalla Usuarios |
 | 2026-09-30 | Logo de Tasaciones Hipotecarias en cabecera y login |
 | 2026-09-29 | Desarrollos: solo remitentes dcamps@grupoatvalor.com y d.camps@tasacioneshipotecarias.com |
 | 2026-09-29 | Orden menú Incidencias → Desarrollos → Reportes; Reportes con pestañas |

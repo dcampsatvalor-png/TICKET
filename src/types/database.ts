@@ -5,11 +5,20 @@ export type TicketStatus =
   | "closed"
   | "cancelled";
 
+/** Roles de acceso al panel (no confundir con estados de ticket). */
+export type AppRole = "admin" | "employee";
+
 export type Profile = {
   id: string;
   full_name: string;
   email: string;
+  role: AppRole;
   created_at: string;
+};
+
+export const ROLE_LABELS: Record<AppRole, string> = {
+  admin: "Administrador",
+  employee: "Empleado",
 };
 
 export type Ticket = {

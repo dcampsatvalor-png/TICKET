@@ -15,12 +15,14 @@ const DEMO_AGENTS: Profile[] = [
     id: "demo-agent-1",
     full_name: "Ana Ruiz",
     email: "ana.ruiz@empresa.local",
+    role: "admin",
     created_at: "2026-01-10T09:00:00.000Z",
   },
   {
     id: "demo-agent-2",
     full_name: "Carlos Méndez",
     email: "carlos.mendez@empresa.local",
+    role: "employee",
     created_at: "2026-01-10T09:05:00.000Z",
   },
 ];
@@ -202,6 +204,34 @@ export function listAllDemoTicketsWithAssignee(): TicketListItem[] {
 
 export function getDemoCurrentUser(): Profile {
   return getStore().profiles[0];
+}
+
+export function createDemoUser(input: {
+  fullName: string;
+  email: string;
+  role: "admin" | "employee";
+}): Profile {
+  const store = getStore();
+  const id = `demo-agent-${Date.now()}`;
+  const profile: Profile = {
+    id,
+    full_name: input.fullName,
+    email: input.email.toLowerCase(),
+    role: input.role,
+    created_at: new Date().toISOString(),
+  };
+  store.profiles.push(profile);
+  return profile;
+}
+
+export function updateDemoUserRole(
+  id: string,
+  role: "admin" | "employee"
+): Profile | null {
+  const profile = getStore().profiles.find((p) => p.id === id);
+  if (!profile) return null;
+  profile.role = role;
+  return profile;
 }
 
 export function listDemoTickets(filters: {

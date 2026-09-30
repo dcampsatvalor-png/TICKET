@@ -9,9 +9,10 @@ export function AppHeader({
   active = "tickets",
 }: {
   profile: Profile | null;
-  active?: "tickets" | "informes" | "desarrollos";
+  active?: "tickets" | "informes" | "desarrollos" | "admin";
 }) {
   const demo = isDemoMode();
+  const showAdmin = profile?.role === "admin";
 
   return (
     <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
@@ -64,6 +65,18 @@ export function AppHeader({
             >
               Reportes
             </Link>
+            {showAdmin ? (
+              <Link
+                href="/admin"
+                className={
+                  active === "admin"
+                    ? "rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-900"
+                    : "rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }
+              >
+                Usuarios
+              </Link>
+            ) : null}
           </nav>
         </div>
 
@@ -76,7 +89,11 @@ export function AppHeader({
           {profile && (
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-slate-800">{profile.full_name}</p>
-              <p className="text-[11px] text-slate-500">{profile.email}</p>
+              <p className="text-[11px] text-slate-500">
+                {profile.role === "admin" ? "Administrador" : "Empleado"}
+                {" · "}
+                {profile.email}
+              </p>
             </div>
           )}
           <LogoutButton />

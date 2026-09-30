@@ -19,6 +19,7 @@ import {
   normalizeEmailSubject,
 } from "@/lib/email/threading";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { normalizeRole } from "@/lib/auth/roles";
 import type {
   AssignmentFilter,
   Profile,
@@ -29,6 +30,17 @@ import type {
   TicketStatus,
   TicketWithRelations,
 } from "@/types/database";
+
+function asProfile(row: Record<string, unknown> | Profile): Profile {
+  const r = row as Profile & { role?: unknown };
+  return {
+    id: r.id,
+    full_name: r.full_name,
+    email: r.email,
+    role: normalizeRole(r.role),
+    created_at: r.created_at,
+  };
+}
 
 export async function getCurrentProfile(): Promise<Profile | null> {
   if (isDemoMode()) return getDemoCurrentUser();
@@ -45,12 +57,13 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (data) return data as Profile;
+  if (data) return asProfile(data as Profile);
 
   return {
     id: user.id,
     full_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Agente",
     email: user.email ?? "",
+    role: normalizeRole(user.user_metadata?.role),
     created_at: new Date().toISOString(),
   };
 }
@@ -60,7 +73,7 @@ export async function listAgents(): Promise<Profile[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("profiles").select("*").order("full_name");
   if (error) throw error;
-  return (data ?? []) as Profile[];
+  return ((data ?? []) as Profile[]).map((p) => asProfile(p));
 }
 
 export async function listTickets(filters: {

@@ -46,6 +46,8 @@ src/
   lib/
     analytics/             # period.ts, service.ts
     tickets/service.ts
+    users/service.ts           # createUser / setRole (service role)
+    auth/roles.ts
     developments/service.ts
     email/                 # resend, threading, mailbox-routing, system-addresses
     demo/store.ts
@@ -78,6 +80,7 @@ Migraciones:
 | `003_outlook_thread_headers.sql` | `email_thread_index`, `email_thread_topic` |
 | `004_cancelled_status.sql` | `cancelled` en enum |
 | `005_development_requests.sql` | `development_requests`, `development_request_comments` |
+| `006_user_roles.sql` | `profiles.role` (`admin`\|`employee`), trigger `handle_new_user` |
 
 ### Desarrollos (tablas separadas)
 
@@ -122,6 +125,7 @@ Implementación: `lib/analytics/service.ts`, `lib/tickets/service.ts`, `lib/demo
 | `/login` | Auth |
 | `/tickets` | UI **Incidencias** — listado + filtros + **LiveRefresh** |
 | `/tickets/[id]` | Detalle incidencia + **LiveRefresh** |
+| `/admin` | UI **Usuarios** (solo `role=admin`): alta y cambio de rol |
 | `/informes` | UI **Reportes** — pestañas `vista=incidencias\|desarrollos` + periodo + KPIs |
 | `/desarrollos` | Listado peticiones desarrollo + filtros periodo/estado + **LiveRefresh** |
 | `/desarrollos/[id]` | Detalle + **LiveRefresh** |
