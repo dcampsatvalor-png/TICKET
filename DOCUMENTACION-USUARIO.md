@@ -213,7 +213,7 @@ Hay dos roles en el panel:
 | **Empleado** | Incidencias, Desarrollos y Reportes |
 | **Administrador** | Lo mismo + pantalla **Usuarios** (crear cuentas y cambiar roles) |
 
-Solo un administrador puede crear usuarios (correo, contraseña temporal y rol). La primera vez hay que ejecutar en Supabase la migración de roles (`006_user_roles.sql`); si nadie queda como admin, un técnico puede hacer:
+Solo un administrador puede crear usuarios (correo, contraseña temporal y rol) y **reiniciar la contraseña** de cualquier usuario desde la tabla. La primera vez hay que ejecutar en Supabase la migración de roles (`006_user_roles.sql`); si nadie queda como admin, un técnico puede hacer:
 
 `update public.profiles set role = 'admin' where email = 'tu@correo.com';`
 
@@ -223,6 +223,7 @@ Solo un administrador puede crear usuarios (correo, contraseña temporal y rol).
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-09-30 | Administrador puede reiniciar contraseña desde Usuarios |
 | 2026-09-30 | Roles Administrador / Empleado y pantalla Usuarios |
 | 2026-09-30 | Logo de Tasaciones Hipotecarias en cabecera y login |
 | 2026-09-29 | Desarrollos: solo remitentes dcamps@grupoatvalor.com y d.camps@tasacioneshipotecarias.com |

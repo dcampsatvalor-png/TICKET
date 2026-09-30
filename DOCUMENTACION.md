@@ -40,6 +40,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-09-30 | Admin: reiniciar contraseña de usuarios |
 | 2026-09-30 | Roles admin/empleado + pantalla Usuarios |
 | 2026-09-30 | Logo Tasaciones Hipotecarias en header, login e icono |
 | 2026-09-29 | Desarrollos: allowlist remitentes (dcamps@ / d.camps@) |

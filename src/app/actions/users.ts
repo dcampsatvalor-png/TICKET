@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createUserAccount, setUserRole } from "@/lib/users/service";
+import {
+  createUserAccount,
+  resetUserPassword,
+  setUserRole,
+} from "@/lib/users/service";
 import type { AppRole } from "@/types/database";
 
 export async function createUserAction(input: {
@@ -23,4 +27,11 @@ export async function updateUserRoleAction(userId: string, role: AppRole) {
     revalidatePath("/admin");
   }
   return result;
+}
+
+export async function resetUserPasswordAction(
+  userId: string,
+  newPassword: string
+) {
+  return resetUserPassword(userId, newPassword);
 }

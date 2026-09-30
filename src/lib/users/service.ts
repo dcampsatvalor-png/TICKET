@@ -153,3 +153,49 @@ export async function setUserRole(
 
   return { ok: true, user: asProfile(data as Profile) };
 }
+
+export async function resetUserPassword(
+  userId: string,
+  newPassword: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await requireAdminProfile();
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "No autorizado.",
+    };
+  }
+
+  if (newPassword.length < 8) {
+    return { ok: false, error: "La contraseña debe tener al menos 8 caracteres." };
+  }
+
+  if (isDemoMode()) {
+    const exists = getDemoAgents().some((p) => p.id === userId);
+    if (!exists) return { ok: false, error: "Usuario no encontrado." };
+    // Demo has no real Auth passwords; acknowledge the action.
+    return { ok: true };
+  }
+
+  const supabase = createServiceClient();
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError || !profile) {
+    return { ok: false, error: "Usuario no encontrado." };
+  }
+
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    password: newPassword,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
+}

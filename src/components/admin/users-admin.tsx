@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   createUserAction,
+  resetUserPasswordAction,
   updateUserRoleAction,
 } from "@/app/actions/users";
 import type { AppRole, Profile } from "@/types/database";
@@ -38,6 +39,9 @@ export function UsersAdmin({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<AppRole>("employee");
+
+  const [resetForId, setResetForId] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
 
   function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -77,6 +81,28 @@ export function UsersAdmin({
       }
       setSuccess(`Rol actualizado: ${ROLE_LABELS[result.user.role]}.`);
       router.refresh();
+    });
+  }
+
+  function onResetPassword(user: Profile) {
+    setError(null);
+    setSuccess(null);
+    if (resetPassword.length < 8) {
+      setError("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    setPendingLabel("Reiniciando contraseña…");
+    startTransition(async () => {
+      const result = await resetUserPasswordAction(user.id, resetPassword);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setResetPassword("");
+      setResetForId(null);
+      setSuccess(
+        `Contraseña reiniciada para ${user.email}. Comunícasela al usuario.`
+      );
     });
   }
 
@@ -176,23 +202,27 @@ export function UsersAdmin({
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <h2 className="mb-4 font-heading text-lg font-semibold text-slate-900">
+        <h2 className="mb-1 font-heading text-lg font-semibold text-slate-900">
           Usuarios del panel
         </h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Puedes cambiar el rol o reiniciar la contraseña de cualquier usuario.
+        </p>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[36rem] text-left text-sm">
+          <table className="w-full min-w-[42rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                 <th className="pb-2 pr-3 font-medium">Nombre</th>
                 <th className="pb-2 pr-3 font-medium">Correo</th>
-                <th className="pb-2 font-medium">Rol</th>
+                <th className="pb-2 pr-3 font-medium">Rol</th>
+                <th className="pb-2 font-medium">Contraseña</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
                 <tr
                   key={user.id}
-                  className="border-b border-slate-100 last:border-0"
+                  className="border-b border-slate-100 last:border-0 align-top"
                 >
                   <td className="py-3 pr-3 font-medium text-slate-800">
                     {user.full_name}
@@ -203,7 +233,7 @@ export function UsersAdmin({
                     ) : null}
                   </td>
                   <td className="py-3 pr-3 text-slate-600">{user.email}</td>
-                  <td className="py-3">
+                  <td className="py-3 pr-3">
                     <Select
                       value={user.role}
                       onValueChange={(v) => onRoleChange(user.id, v)}
@@ -228,6 +258,59 @@ export function UsersAdmin({
                         <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
                       </SelectContent>
                     </Select>
+                  </td>
+                  <td className="py-3">
+                    {resetForId === user.id ? (
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <Input
+                          type="password"
+                          value={resetPassword}
+                          onChange={(e) => setResetPassword(e.target.value)}
+                          placeholder="Nueva contraseña (mín. 8)"
+                          minLength={8}
+                          disabled={pending}
+                          className="w-full sm:w-52"
+                          autoComplete="new-password"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={pending}
+                            onClick={() => onResetPassword(user)}
+                          >
+                            Guardar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={pending}
+                            onClick={() => {
+                              setResetForId(null);
+                              setResetPassword("");
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() => {
+                          setError(null);
+                          setSuccess(null);
+                          setResetForId(user.id);
+                          setResetPassword("");
+                        }}
+                      >
+                        Reiniciar contraseña
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}

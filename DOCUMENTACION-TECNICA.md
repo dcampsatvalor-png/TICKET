@@ -46,7 +46,7 @@ src/
   lib/
     analytics/             # period.ts, service.ts
     tickets/service.ts
-    users/service.ts           # createUser / setRole (service role)
+    users/service.ts           # createUser / setRole / resetPassword (service role)
     auth/roles.ts
     developments/service.ts
     email/                 # resend, threading, mailbox-routing, system-addresses
