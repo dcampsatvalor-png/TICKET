@@ -34,7 +34,7 @@ Si no podéis entrar, pedid alta al administrador del sistema (Supabase / IT).
 ## 3. Cómo llegan las incidencias
 
 1. Alguien envía un correo a **`incidencias@grupoatvalor.com`**.
-2. El sistema crea un ticket **Abierto** (o añade el mensaje a un ticket ya existente si es una respuesta al mismo hilo).
+2. El sistema crea un ticket **Abierto** (o añade el mensaje a un ticket ya existente si es una respuesta al mismo hilo, aunque escriba **otra persona** del mismo correo — p. ej. un compañero en copia).
 3. Vosotros lo gestionáis en **Incidencias**.
 
 ### Buenas prácticas para quien abre la incidencia
@@ -115,7 +115,7 @@ Filtran por fecha de **creación** del ticket. Si entráis desde Informes pulsan
    - Cerrado = archivo / cierre administrativo.
 
 3. **Respuestas al mismo asunto**  
-   Si el usuario responde al mismo correo, suele ir al **mismo ticket**. Un asunto distinto suele crear ticket nuevo.
+   Si alguien responde al mismo correo (`Re:` / mismo hilo), suele ir al **mismo ticket** aunque el remitente sea otro. Un asunto distinto (sin `Re:`) suele crear ticket nuevo.
 
 ---
 
@@ -211,6 +211,7 @@ En Outlook debe existir una regla similar a la de incidencias (copia al inbound 
 | No llega el ticket tras escribir a incidencias@ | Avisar a quien gestione Outlook/Resend; puede fallar la copia al sistema |
 | La respuesta del agente sale como correo “nuevo” en Outlook | Tema de hilos de correo; avisar a quien mantenga el sistema |
 | Al responder desde el panel aparecía otro ticket | Corregido: el sistema ignora el eco del correo enviado desde `incidencias@` |
+| Respuesta de otro correo del mismo hilo abría ticket nuevo | Corregido: se une por hilo Outlook / asunto `Re:` aunque cambie el remitente |
 | No veo un ticket anulado en Sin asignar | Es normal: las anuladas no cuentan ahí |
 | No puedo iniciar sesión | Pedir reset de contraseña / alta de usuario agente |
 | Mi petición de desarrollo no aparece | Comprobar que el correo fue a **desarrollos@**, que el **From** es dcamps@… o d.camps@…, y que Outlook copia a Resend |
@@ -236,6 +237,7 @@ Solo un administrador puede crear usuarios (correo, contraseña temporal y rol) 
 
 | Fecha | Cambio visible |
 |---|---|
+| 2026-10-02 | Respuestas del mismo hilo (aunque sea otro remitente) ya no crean ticket duplicado |
 | 2026-09-30 | Desarrollos: pantalla de carga al navegar y al guardar cambios (como Incidencias) |
 | 2026-09-30 | En Reportes, la tabla Por agente solo muestra empleados (no administradores) |
 | 2026-09-30 | Búsqueda, prioridad (Baja/Media/Alta) y observaciones en Incidencias |

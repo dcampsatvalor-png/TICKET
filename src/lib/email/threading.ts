@@ -61,3 +61,24 @@ export function messageIdListIncludes(
     .filter(Boolean)
     .some((id) => normalizeMessageId(id) === n);
 }
+
+/** Merge Message-IDs into a References-style chain (deduped, order preserved). */
+export function mergeMessageIdChain(
+  existing: string | null | undefined,
+  ...ids: Array<string | null | undefined>
+): string {
+  const parts: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of [
+    ...(existing ?? "").split(/\s+/),
+    ...ids.flatMap((id) => (id ?? "").split(/\s+/)),
+  ]) {
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    const key = normalizeMessageId(trimmed);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    parts.push(trimmed);
+  }
+  return parts.join(" ");
+}

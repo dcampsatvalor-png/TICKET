@@ -186,9 +186,15 @@ La regla de Outlook puede copiar a Resend también el correo **saliente** desde 
 ### Threading inbound (`ingestInboundEmail`)
 
 1. `[Ticket #N]` / `Ticket #N` en asunto **o cuerpo**
-2. Message-ID match normalizado (`In-Reply-To` / `References`)
-3. Mismo sender + subject normalizado + open/in_progress
-4. Else → ticket nuevo
+2. Message-ID match normalizado (`In-Reply-To` / `References` ↔ `last_email_message_id` / `email_references`)
+3. Misma conversación Outlook: raíz de `Thread-Index` (22 bytes) igual a la del ticket
+4. Asunto tipo `Re:`/`Fw:`: mismo subject normalizado **aunque el remitente sea otro** (CC / compañero) en open/in_progress/resolved
+5. Mismo sender + subject normalizado + open/in_progress
+6. Else → ticket nuevo
+
+`resolveOriginalMessageId` guarda el Message-ID **de este correo** (no el padre): no usar `In-Reply-To` / `References` / `X-MS-Exchange-Parent-Message-Id` como id actual (rompía el hilo).
+
+Misma lógica en `ingestDevelopmentInboundEmail`.
 
 Archivos: `email/resend.ts`, `thread-index.ts`, `threading.ts`, `headers.ts`, `system-addresses.ts`, `api/webhooks/resend/route.ts`.
 
@@ -232,6 +238,7 @@ npm run typecheck
 
 | Fecha / commit | Cambio |
 |---|---|
+| 2026-10-02 | Fix duplicados inbound: Message-ID propio, Thread-Index root, Re: cross-sender |
 | 2026-09-30 | Desarrollos/admin: `loading.tsx` + overlay al abrir fila; detalle con overlay en acciones |
 | 2026-09-30 | Reportes `byAgent`: solo `role=employee`; omitir asignaciones a admin |
 | 2026-09-24 | Filtro de periodo en Tickets sincronizado con Informes KPI deep-links |

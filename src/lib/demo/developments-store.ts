@@ -138,12 +138,23 @@ export function listOpenDemoDevelopmentsBySender(email: string): DevelopmentRequ
   );
 }
 
+/** All demo development requests, newest first (for inbound threading). */
+export function listDemoDevelopmentsRaw(): DevelopmentRequest[] {
+  return [...getStore().requests].sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
+}
+
 export function createDemoDevelopmentRequest(input: {
   subject: string;
   description: string;
   senderEmail: string;
   senderName: string | null;
   messageId?: string | null;
+  threadIndex?: string | null;
+  threadTopic?: string | null;
+  emailReferences?: string | null;
 }): DevelopmentRequest {
   const store = getStore();
   const req: DevelopmentRequest = {
@@ -158,7 +169,9 @@ export function createDemoDevelopmentRequest(input: {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     last_email_message_id: input.messageId ?? null,
-    email_references: input.messageId ?? null,
+    email_references: input.emailReferences ?? input.messageId ?? null,
+    email_thread_index: input.threadIndex ?? null,
+    email_thread_topic: input.threadTopic ?? null,
   };
   store.nextNumber += 1;
   store.requests.push(req);

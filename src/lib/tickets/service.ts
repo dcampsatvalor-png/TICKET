@@ -8,14 +8,18 @@ import {
   getDemoCurrentUser,
   getDemoTicket,
   listDemoTickets,
+  listDemoTicketsRaw,
   listOpenDemoTicketsBySender,
   updateDemoTicketAssignee,
   updateDemoTicketEmailThread,
   updateDemoTicketPriority,
   updateDemoTicketStatus,
 } from "@/lib/demo/store";
+import { threadIndexesSameConversation } from "@/lib/email/thread-index";
 import {
   extractTicketNumberFromEmail,
+  isReplyOrForwardSubject,
+  mergeMessageIdChain,
   messageIdListIncludes,
   messageIdsEqual,
   normalizeEmailSubject,
@@ -302,24 +306,19 @@ function subjectsMatchForThread(emailSubject: string, ticketSubject: string): bo
   return Boolean(a && b && a === b);
 }
 
-function appendMessageIdChain(
-  existing: string | null | undefined,
-  messageId: string
-): string {
-  const parts = (existing ?? "")
-    .split(/\s+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (!parts.includes(messageId)) parts.push(messageId);
-  return parts.join(" ");
-}
-
 async function appendInboundComment(
   ticket: Ticket,
   body: string,
   messageId?: string | null,
-  threadMeta?: { threadIndex?: string | null; threadTopic?: string | null }
+  threadMeta?: { threadIndex?: string | null; threadTopic?: string | null },
+  extraReferenceIds: string[] = []
 ): Promise<{ ticket: Ticket; created: false }> {
+  const nextReferences = mergeMessageIdChain(
+    ticket.email_references,
+    messageId,
+    ...extraReferenceIds
+  );
+
   if (isDemoMode()) {
     addDemoComment({
       ticketId: ticket.id,
@@ -327,13 +326,8 @@ async function appendInboundComment(
       content: body,
       isInternal: false,
     });
-    if (messageId) {
-      ticket.last_email_message_id = messageId;
-      ticket.email_references = appendMessageIdChain(
-        ticket.email_references,
-        messageId
-      );
-    }
+    if (messageId) ticket.last_email_message_id = messageId;
+    if (nextReferences) ticket.email_references = nextReferences;
     if (threadMeta?.threadIndex) ticket.email_thread_index = threadMeta.threadIndex;
     if (threadMeta?.threadTopic) ticket.email_thread_topic = threadMeta.threadTopic;
     ticket.updated_at = new Date().toISOString();
@@ -350,13 +344,8 @@ async function appendInboundComment(
   });
 
   const patch: Record<string, string> = { updated_at: now };
-  if (messageId) {
-    patch.last_email_message_id = messageId;
-    patch.email_references = appendMessageIdChain(
-      ticket.email_references,
-      messageId
-    );
-  }
+  if (messageId) patch.last_email_message_id = messageId;
+  if (nextReferences) patch.email_references = nextReferences;
   if (threadMeta?.threadIndex) patch.email_thread_index = threadMeta.threadIndex;
   if (threadMeta?.threadTopic) patch.email_thread_topic = threadMeta.threadTopic;
   await supabase.from("tickets").update(patch).eq("id", ticket.id);
@@ -373,8 +362,10 @@ async function appendInboundComment(
  * Threading rules (helpdesk-style conversation forever):
  * 1. [Ticket #N] in subject or body → append to that ticket
  * 2. In-Reply-To / References match a stored Message-ID on a ticket → same thread
- * 3. Same sender + open/in_progress + same normalized subject → same thread
- * 4. Otherwise → create a new ticket
+ * 3. Outlook Thread-Index conversation root matches a stored ticket → same thread
+ * 4. Reply/forward subject: same normalized subject (any sender) on open/in_progress/resolved
+ * 5. Same sender + open/in_progress + same normalized subject → same thread
+ * 6. Otherwise → create a new ticket
  */
 export async function ingestInboundEmail(input: {
   subject: string;
@@ -412,27 +403,63 @@ export async function ingestInboundEmail(input: {
     );
   }
 
+  function ticketMatchesThreadIndex(t: Ticket): boolean {
+    return threadIndexesSameConversation(
+      t.email_thread_index,
+      threadMeta.threadIndex
+    );
+  }
+
+  function ticketMatchesReplySubject(t: Ticket): boolean {
+    if (subjectsMatchForThread(input.subject, t.subject)) return true;
+    if (
+      t.email_thread_topic &&
+      subjectsMatchForThread(input.subject, t.email_thread_topic)
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  async function attach(existing: Ticket) {
+    return appendInboundComment(
+      existing,
+      input.body,
+      messageId,
+      threadMeta,
+      threadIds
+    );
+  }
+
   if (isDemoMode()) {
     if (ticketNumber != null) {
       const existing = findDemoTicketByNumber(ticketNumber);
-      if (existing) {
-        return appendInboundComment(existing, input.body, messageId, threadMeta);
-      }
+      if (existing) return attach(existing);
+    }
+
+    const recent = listDemoTicketsRaw().filter((t) => t.status !== "cancelled");
+    const byHeader = recent.find((t) => ticketMatchesThreadIds(t));
+    if (byHeader) return attach(byHeader);
+
+    const byIndex = recent.find((t) => ticketMatchesThreadIndex(t));
+    if (byIndex) return attach(byIndex);
+
+    if (isReplyOrForwardSubject(input.subject)) {
+      const byReplySubject = recent
+        .filter((t) =>
+          ["open", "in_progress", "resolved"].includes(t.status)
+        )
+        .find((t) => ticketMatchesReplySubject(t));
+      if (byReplySubject) return attach(byReplySubject);
     }
 
     const openForSender = listOpenDemoTicketsBySender(input.senderEmail);
-    const byHeader = openForSender.find((t) => ticketMatchesThreadIds(t));
-    if (byHeader) {
-      return appendInboundComment(byHeader, input.body, messageId, threadMeta);
-    }
-
     const sameSubject = openForSender.find((t) =>
       subjectsMatchForThread(input.subject, t.subject)
     );
-    if (sameSubject) {
-      return appendInboundComment(sameSubject, input.body, messageId, threadMeta);
-    }
+    if (sameSubject) return attach(sameSubject);
 
+    const refs = mergeMessageIdChain(null, messageId, ...threadIds);
     const ticket = createDemoTicket({
       subject: cleanTicketSubject(input.subject),
       description: input.body,
@@ -441,6 +468,7 @@ export async function ingestInboundEmail(input: {
       messageId,
       threadIndex: threadMeta.threadIndex,
       threadTopic: threadMeta.threadTopic,
+      emailReferences: refs || null,
     });
     return { ticket, created: true };
   }
@@ -453,29 +481,34 @@ export async function ingestInboundEmail(input: {
       .select("*")
       .eq("ticket_number", ticketNumber)
       .maybeSingle();
-    if (existing) {
-      return appendInboundComment(
-        existing as Ticket,
-        input.body,
-        messageId,
-        threadMeta
-      );
-    }
+    if (existing) return attach(existing as Ticket);
   }
 
+  const { data: recentRows } = await supabase
+    .from("tickets")
+    .select("*")
+    .in("status", ["open", "in_progress", "resolved", "closed"])
+    .order("updated_at", { ascending: false })
+    .limit(120);
+  const recent = (recentRows ?? []) as Ticket[];
+
   if (threadIds.length > 0) {
-    const { data: recent } = await supabase
-      .from("tickets")
-      .select("*")
-      .in("status", ["open", "in_progress", "resolved", "closed"])
-      .order("updated_at", { ascending: false })
-      .limit(80);
-    const matched = ((recent ?? []) as Ticket[]).find((t) =>
-      ticketMatchesThreadIds(t)
-    );
-    if (matched) {
-      return appendInboundComment(matched, input.body, messageId, threadMeta);
-    }
+    const matched = recent.find((t) => ticketMatchesThreadIds(t));
+    if (matched) return attach(matched);
+  }
+
+  if (threadMeta.threadIndex) {
+    const matched = recent.find((t) => ticketMatchesThreadIndex(t));
+    if (matched) return attach(matched);
+  }
+
+  // Replies from another person in the same mail thread (CC / colleague)
+  // often lack [Ticket #N] and may lose In-Reply-To after Outlook→Resend.
+  if (isReplyOrForwardSubject(input.subject)) {
+    const byReplySubject = recent
+      .filter((t) => ["open", "in_progress", "resolved"].includes(t.status))
+      .find((t) => ticketMatchesReplySubject(t));
+    if (byReplySubject) return attach(byReplySubject);
   }
 
   const { data: openTickets } = await supabase
@@ -489,11 +522,10 @@ export async function ingestInboundEmail(input: {
   const sameSubject = openList.find((t) =>
     subjectsMatchForThread(input.subject, t.subject)
   );
-  if (sameSubject) {
-    return appendInboundComment(sameSubject, input.body, messageId, threadMeta);
-  }
+  if (sameSubject) return attach(sameSubject);
 
   const subject = cleanTicketSubject(input.subject);
+  const refs = mergeMessageIdChain(null, messageId, ...threadIds);
 
   const insertRow: Record<string, unknown> = {
     subject,
@@ -502,10 +534,8 @@ export async function ingestInboundEmail(input: {
     sender_name: input.senderName,
     status: "open",
   };
-  if (messageId) {
-    insertRow.last_email_message_id = messageId;
-    insertRow.email_references = messageId;
-  }
+  if (messageId) insertRow.last_email_message_id = messageId;
+  if (refs) insertRow.email_references = refs;
   if (threadMeta.threadIndex) insertRow.email_thread_index = threadMeta.threadIndex;
   if (threadMeta.threadTopic) insertRow.email_thread_topic = threadMeta.threadTopic;
 
@@ -541,7 +571,7 @@ export async function updateTicketEmailThread(
   };
   if (messageId) {
     patch.last_email_message_id = messageId;
-    patch.email_references = appendMessageIdChain(previousReferences, messageId);
+    patch.email_references = mergeMessageIdChain(previousReferences, messageId);
   }
   if (threadIndex) patch.email_thread_index = threadIndex;
   if (!messageId && !threadIndex) return;

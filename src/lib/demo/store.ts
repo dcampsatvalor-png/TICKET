@@ -435,6 +435,7 @@ export function createDemoTicket(input: {
   messageId?: string | null;
   threadIndex?: string | null;
   threadTopic?: string | null;
+  emailReferences?: string | null;
 }): Ticket {
   const store = getStore();
   const now = new Date().toISOString();
@@ -451,12 +452,20 @@ export function createDemoTicket(input: {
     created_at: now,
     updated_at: now,
     last_email_message_id: input.messageId ?? null,
-    email_references: input.messageId ?? null,
+    email_references: input.emailReferences ?? input.messageId ?? null,
     email_thread_index: input.threadIndex ?? null,
     email_thread_topic: input.threadTopic ?? null,
   };
   store.tickets.unshift(ticket);
   return ticket;
+}
+
+/** All demo tickets, newest first (for inbound threading). */
+export function listDemoTicketsRaw(): Ticket[] {
+  return [...getStore().tickets].sort(
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
 }
 
 export function findOpenDemoTicketBySender(email: string): Ticket | null {

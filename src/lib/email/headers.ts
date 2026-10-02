@@ -12,9 +12,14 @@ export function headerGet(
 }
 
 /**
- * Prefer the client's original Message-ID when mail was forwarded/copied to Resend.
- * Outlook forwards often invent a new Message-ID; the original may still appear in
- * References, In-Reply-To, or vendor-specific headers.
+ * Message-ID of *this* inbound email (not the parent).
+ *
+ * When Outlook copies mail into Resend it may mint a new Message-ID; prefer
+ * X-Original-Message-ID / X-Microsoft-Original-Message-ID when present.
+ *
+ * Do NOT use In-Reply-To, References, or X-MS-Exchange-Parent-Message-Id here:
+ * those identify the parent and, if stored as last_email_message_id, break
+ * threading for the next reply in the conversation.
  */
 export function resolveOriginalMessageId(input: {
   messageId?: string | null;
@@ -23,11 +28,7 @@ export function resolveOriginalMessageId(input: {
   const headers = input.headers ?? {};
   const candidates = [
     headerGet(headers, "X-Original-Message-ID"),
-    headerGet(headers, "X-MS-Exchange-Parent-Message-Id"),
     headerGet(headers, "X-Microsoft-Original-Message-ID"),
-    // First id in References is often the conversation root
-    ...(headerGet(headers, "References") ?? "").split(/\s+/),
-    headerGet(headers, "In-Reply-To"),
     input.messageId,
     headerGet(headers, "Message-ID"),
   ]

@@ -5,6 +5,7 @@ import {
   findDemoDevelopmentByNumber,
   getDemoDevelopmentRequest,
   listDemoDevelopmentRequests,
+  listDemoDevelopmentsRaw,
   listOpenDemoDevelopmentsBySender,
   updateDemoDevelopmentAssignee,
   updateDemoDevelopmentEmailThread,
@@ -14,7 +15,10 @@ import {
   cleanDevelopmentSubject,
   extractDevelopmentNumber,
 } from "@/lib/email/development-threading";
+import { threadIndexesSameConversation } from "@/lib/email/thread-index";
 import {
+  isReplyOrForwardSubject,
+  mergeMessageIdChain,
   messageIdListIncludes,
   messageIdsEqual,
   normalizeEmailSubject,
@@ -186,24 +190,19 @@ function subjectsMatchForThread(emailSubject: string, requestSubject: string): b
   return Boolean(a && b && a === b);
 }
 
-function appendMessageIdChain(
-  existing: string | null | undefined,
-  messageId: string
-): string {
-  const parts = (existing ?? "")
-    .split(/\s+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (!parts.includes(messageId)) parts.push(messageId);
-  return parts.join(" ");
-}
-
 async function appendInboundDevelopmentComment(
   request: DevelopmentRequest,
   body: string,
   messageId?: string | null,
-  threadMeta?: { threadIndex?: string | null; threadTopic?: string | null }
+  threadMeta?: { threadIndex?: string | null; threadTopic?: string | null },
+  extraReferenceIds: string[] = []
 ): Promise<{ request: DevelopmentRequest; created: false }> {
+  const nextReferences = mergeMessageIdChain(
+    request.email_references,
+    messageId,
+    ...extraReferenceIds
+  );
+
   if (isDemoMode()) {
     addDemoDevelopmentComment({
       requestId: request.id,
@@ -211,13 +210,8 @@ async function appendInboundDevelopmentComment(
       content: body,
       isInternal: false,
     });
-    if (messageId) {
-      request.last_email_message_id = messageId;
-      request.email_references = appendMessageIdChain(
-        request.email_references,
-        messageId
-      );
-    }
+    if (messageId) request.last_email_message_id = messageId;
+    if (nextReferences) request.email_references = nextReferences;
     if (threadMeta?.threadIndex) request.email_thread_index = threadMeta.threadIndex;
     if (threadMeta?.threadTopic) request.email_thread_topic = threadMeta.threadTopic;
     request.updated_at = new Date().toISOString();
@@ -234,13 +228,8 @@ async function appendInboundDevelopmentComment(
   });
 
   const patch: Record<string, string> = { updated_at: now };
-  if (messageId) {
-    patch.last_email_message_id = messageId;
-    patch.email_references = appendMessageIdChain(
-      request.email_references,
-      messageId
-    );
-  }
+  if (messageId) patch.last_email_message_id = messageId;
+  if (nextReferences) patch.email_references = nextReferences;
   if (threadMeta?.threadIndex) patch.email_thread_index = threadMeta.threadIndex;
   if (threadMeta?.threadTopic) patch.email_thread_topic = threadMeta.threadTopic;
   await supabase.from("development_requests").update(patch).eq("id", request.id);
@@ -286,48 +275,72 @@ export async function ingestDevelopmentInboundEmail(input: {
     );
   }
 
+  function requestMatchesThreadIndex(r: DevelopmentRequest): boolean {
+    return threadIndexesSameConversation(
+      r.email_thread_index,
+      threadMeta.threadIndex
+    );
+  }
+
+  function requestMatchesReplySubject(r: DevelopmentRequest): boolean {
+    if (subjectsMatchForThread(input.subject, r.subject)) return true;
+    if (
+      r.email_thread_topic &&
+      subjectsMatchForThread(input.subject, r.email_thread_topic)
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  async function attach(existing: DevelopmentRequest) {
+    return appendInboundDevelopmentComment(
+      existing,
+      input.body,
+      messageId,
+      threadMeta,
+      threadIds
+    );
+  }
+
   if (isDemoMode()) {
     if (requestNumber != null) {
       const existing = findDemoDevelopmentByNumber(requestNumber);
-      if (existing) {
-        return appendInboundDevelopmentComment(
-          existing,
-          input.body,
-          messageId,
-          threadMeta
-        );
-      }
+      if (existing) return attach(existing);
+    }
+
+    const recent = listDemoDevelopmentsRaw().filter((r) => r.status !== "cancelled");
+    const byHeader = recent.find((r) => requestMatchesThreadIds(r));
+    if (byHeader) return attach(byHeader);
+
+    const byIndex = recent.find((r) => requestMatchesThreadIndex(r));
+    if (byIndex) return attach(byIndex);
+
+    if (isReplyOrForwardSubject(input.subject)) {
+      const byReplySubject = recent
+        .filter((r) =>
+          ["open", "in_progress", "resolved"].includes(r.status)
+        )
+        .find((r) => requestMatchesReplySubject(r));
+      if (byReplySubject) return attach(byReplySubject);
     }
 
     const openForSender = listOpenDemoDevelopmentsBySender(input.senderEmail);
-    const byHeader = openForSender.find((r) => requestMatchesThreadIds(r));
-    if (byHeader) {
-      return appendInboundDevelopmentComment(
-        byHeader,
-        input.body,
-        messageId,
-        threadMeta
-      );
-    }
-
     const sameSubject = openForSender.find((r) =>
       subjectsMatchForThread(input.subject, r.subject)
     );
-    if (sameSubject) {
-      return appendInboundDevelopmentComment(
-        sameSubject,
-        input.body,
-        messageId,
-        threadMeta
-      );
-    }
+    if (sameSubject) return attach(sameSubject);
 
+    const refs = mergeMessageIdChain(null, messageId, ...threadIds);
     const request = createDemoDevelopmentRequest({
       subject: cleanDevelopmentSubject(input.subject),
       description: input.body,
       senderEmail: input.senderEmail,
       senderName: input.senderName,
       messageId,
+      threadIndex: threadMeta.threadIndex,
+      threadTopic: threadMeta.threadTopic,
+      emailReferences: refs || null,
     });
     return { request, created: true };
   }
@@ -340,34 +353,32 @@ export async function ingestDevelopmentInboundEmail(input: {
       .select("*")
       .eq("request_number", requestNumber)
       .maybeSingle();
-    if (existing) {
-      return appendInboundDevelopmentComment(
-        existing as DevelopmentRequest,
-        input.body,
-        messageId,
-        threadMeta
-      );
-    }
+    if (existing) return attach(existing as DevelopmentRequest);
   }
 
+  const { data: recentRows } = await supabase
+    .from("development_requests")
+    .select("*")
+    .in("status", ["open", "in_progress", "resolved", "closed"])
+    .order("updated_at", { ascending: false })
+    .limit(120);
+  const recent = (recentRows ?? []) as DevelopmentRequest[];
+
   if (threadIds.length > 0) {
-    const { data: recent } = await supabase
-      .from("development_requests")
-      .select("*")
-      .in("status", ["open", "in_progress", "resolved", "closed"])
-      .order("updated_at", { ascending: false })
-      .limit(80);
-    const matched = ((recent ?? []) as DevelopmentRequest[]).find((r) =>
-      requestMatchesThreadIds(r)
-    );
-    if (matched) {
-      return appendInboundDevelopmentComment(
-        matched,
-        input.body,
-        messageId,
-        threadMeta
-      );
-    }
+    const matched = recent.find((r) => requestMatchesThreadIds(r));
+    if (matched) return attach(matched);
+  }
+
+  if (threadMeta.threadIndex) {
+    const matched = recent.find((r) => requestMatchesThreadIndex(r));
+    if (matched) return attach(matched);
+  }
+
+  if (isReplyOrForwardSubject(input.subject)) {
+    const byReplySubject = recent
+      .filter((r) => ["open", "in_progress", "resolved"].includes(r.status))
+      .find((r) => requestMatchesReplySubject(r));
+    if (byReplySubject) return attach(byReplySubject);
   }
 
   const { data: openRequests } = await supabase
@@ -381,16 +392,10 @@ export async function ingestDevelopmentInboundEmail(input: {
   const sameSubject = openList.find((r) =>
     subjectsMatchForThread(input.subject, r.subject)
   );
-  if (sameSubject) {
-    return appendInboundDevelopmentComment(
-      sameSubject,
-      input.body,
-      messageId,
-      threadMeta
-    );
-  }
+  if (sameSubject) return attach(sameSubject);
 
   const subject = cleanDevelopmentSubject(input.subject);
+  const refs = mergeMessageIdChain(null, messageId, ...threadIds);
   const insertRow: Record<string, unknown> = {
     subject,
     description: input.body,
@@ -398,10 +403,8 @@ export async function ingestDevelopmentInboundEmail(input: {
     sender_name: input.senderName,
     status: "open",
   };
-  if (messageId) {
-    insertRow.last_email_message_id = messageId;
-    insertRow.email_references = messageId;
-  }
+  if (messageId) insertRow.last_email_message_id = messageId;
+  if (refs) insertRow.email_references = refs;
   if (threadMeta.threadIndex) insertRow.email_thread_index = threadMeta.threadIndex;
   if (threadMeta.threadTopic) insertRow.email_thread_topic = threadMeta.threadTopic;
 
@@ -437,7 +440,7 @@ export async function updateDevelopmentEmailThread(
   };
   if (messageId) {
     patch.last_email_message_id = messageId;
-    patch.email_references = appendMessageIdChain(previousReferences, messageId);
+    patch.email_references = mergeMessageIdChain(previousReferences, messageId);
   }
   if (threadIndex) patch.email_thread_index = threadIndex;
   if (!messageId && !threadIndex) return;

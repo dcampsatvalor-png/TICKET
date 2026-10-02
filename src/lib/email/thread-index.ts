@@ -53,3 +53,28 @@ export function bareConversationSubject(subject: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/**
+ * Outlook conversation root = first 22 bytes of Thread-Index (base64).
+ * Replies append 5-byte blocks; the root stays stable for the whole thread.
+ */
+export function threadIndexRoot(base64: string | null | undefined): string | null {
+  const trimmed = base64?.trim();
+  if (!trimmed) return null;
+  try {
+    const buf = Buffer.from(trimmed, "base64");
+    if (buf.length < 22 || (buf.length - 22) % 5 !== 0) return null;
+    return buf.subarray(0, 22).toString("base64");
+  } catch {
+    return null;
+  }
+}
+
+export function threadIndexesSameConversation(
+  a: string | null | undefined,
+  b: string | null | undefined
+): boolean {
+  const ra = threadIndexRoot(a);
+  const rb = threadIndexRoot(b);
+  return Boolean(ra && rb && ra === rb);
+}

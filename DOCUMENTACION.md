@@ -7,7 +7,7 @@ Documentación viva del helpdesk. Hay **dos guías**:
 | **[DOCUMENTACION-USUARIO.md](./DOCUMENTACION-USUARIO.md)** | Agentes IT y uso diario del panel (estados, filtros, Informes, reglas de negocio en lenguaje claro) |
 | **[DOCUMENTACION-TECNICA.md](./DOCUMENTACION-TECNICA.md)** | Desarrollo, arquitectura, correo, BD, variables, historial de commits |
 
-Última actualización: 2026-09-30
+Última actualización: 2026-10-02
 
 ---
 
@@ -41,6 +41,7 @@ En cada cambio del sistema, actualizar **las guías afectadas** + este índice (
 
 | Fecha | Cambio |
 |---|---|
+| 2026-10-02 | Fix tickets duplicados en respuestas del mismo hilo (otro remitente / Thread-Index) |
 | 2026-09-30 | Desarrollos: LoadingOverlay en navegación y acciones |
 | 2026-09-30 | Reportes: Por agente solo empleados (sin administradores) |
 | 2026-09-30 | Incidencias: búsqueda, prioridad y observaciones |
